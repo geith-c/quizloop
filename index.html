@@ -234,6 +234,7 @@ let attempts=[];
 let timerInterval=null;
 let timerRemaining=30;
 let audioContext=null;
+let activeTab = "play";
 
 function loadTimerSettings(){
   try{
@@ -350,34 +351,89 @@ function stopQuestionTimer(){
   }
 }
 
-function startQuestionTimer(){
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden){
+    saveQuizSession();
+    stopQuestionTimer();
+
+    document.getElementById("timerStatus").textContent =
+      "⏸ Timer paused — app is in the background.";
+  } else if(
+    activeTab === "play" &&
+    ramble &&
+    !answered &&
+    order.length > 0
+  ){
+    startQuestionTimer(false);
+  }
+});
+
+window.addEventListener("pagehide", function(){
+  saveQuizSession();
   stopQuestionTimer();
-  timerRemaining=saveTimerSettings();
+});
+
+function startQuestionTimer(reset = true){
+  stopQuestionTimer();
+
+  if(reset){
+    timerRemaining = saveTimerSettings();
+  }
+
   updateTimerDisplay();
 
-  const enabled=document.getElementById("timerEnabled").checked;
-  const status=document.getElementById("timerStatus");
+  const enabled = document.getElementById("timerEnabled").checked;
+  const status = document.getElementById("timerStatus");
 
   if(!enabled){
-    status.textContent="Timer is turned off.";
+    status.textContent = "Timer is turned off.";
     return;
   }
 
-  status.textContent="⏱️ Timer ready.";
-  timerInterval=setInterval(()=>{
-    if(answered||!ramble)return;
-    timerRemaining--;
-    updateTimerDisplay();
+  if(
+    document.hidden ||
+    typeof activeTab !== "undefined" && activeTab !== "play" ||
+    !ramble ||
+    answered ||
+    current >= order.length
+  ){
+    status.textContent = "⏸ Timer paused.";
+    return;
+  }
 
-    if(timerRemaining>0&&document.getElementById("organEnabled").checked){
-      playOrganNote(timerRemaining%2===0?523:659,0.16);
+  if(timerRemaining <= 0){
+    handleTimeout();
+    return;
+  }
+
+  status.textContent = "⏱️ Timer running.";
+
+  timerInterval = setInterval(() => {
+    if(
+      document.hidden ||
+      activeTab !== "play" ||
+      !ramble ||
+      answered
+    ){
+      stopQuestionTimer();
+      return;
     }
 
-    if(timerRemaining<=0){
+    timerRemaining = Math.max(0, timerRemaining - 1);
+    updateTimerDisplay();
+
+    if(
+      timerRemaining > 0 &&
+      document.getElementById("organEnabled").checked
+    ){
+      playOrganNote(timerRemaining % 2 === 0 ? 523 : 659, 0.16);
+    }
+
+    if(timerRemaining <= 0){
       stopQuestionTimer();
       handleTimeout();
     }
-  },1000);
+  }, 1000);
 }
 
 function handleTimeout(){
@@ -540,6 +596,105 @@ function currentQuestion(){
   return questions.find(q=>q.id===id);
 }
 
+const QUIZ_SESSION_KEY = "ramble_quiz_session_v1";
+
+function saveQuizSession(){
+  try{
+    const session = {
+      selectedSetId,
+      order,
+      current,
+      score,
+      round,
+      answered,
+      ramble,
+      attempts,
+      roundSaved,
+      timerRemaining,
+      answerText: document.getElementById("answer").value,
+      savedAt: Date.now()
+    };
+
+    localStorage.setItem(
+      QUIZ_SESSION_KEY,
+      JSON.stringify(session)
+    );
+  }catch(error){
+    console.warn("Unable to save quiz session:", error);
+  }
+}
+
+function clearQuizSession(){
+  localStorage.removeItem(QUIZ_SESSION_KEY);
+}
+
+function restoreQuizSession(){
+  try{
+    const raw = localStorage.getItem(QUIZ_SESSION_KEY);
+    if(!raw) return false;
+
+    const s = JSON.parse(raw);
+
+    if(
+      !s ||
+      !Array.isArray(s.order) ||
+      !Array.isArray(s.attempts) ||
+      !s.order.every(id => questions.some(q => q.id === id)) ||
+      !Number.isInteger(s.current) ||
+      s.current < 0 ||
+      s.current > s.order.length
+    ){
+      clearQuizSession();
+      return false;
+    }
+
+    selectedSetId =
+      s.selectedSetId === "all" ||
+      sets.some(set => set.id === s.selectedSetId)
+        ? s.selectedSetId
+        : "all";
+
+    order = s.order;
+    current = s.current;
+    score = Number(s.score) || 0;
+    round = Number(s.round) || 1;
+    attempts = s.attempts;
+    roundSaved = s.roundSaved === true;
+    ramble = s.ramble === true;
+    timerRemaining = Math.max(
+      0,
+      Math.min(3600, Number(s.timerRemaining) || 0)
+    );
+
+    // Kung nasagutan na ang tanong bago isinara,
+    // magpatuloy sa susunod na tanong.
+    if(s.answered){
+      current++;
+      timerRemaining = saveTimerSettings();
+    }
+
+    answered = false;
+
+    renderSetSelect();
+
+    document.getElementById("rambleBtn").textContent =
+      ramble ? "⏸ PAUSE QUIZ" : "▶ RESUME QUIZ";
+
+    showQuestion("", !s.answered);
+
+    if(!s.answered){
+      document.getElementById("answer").value =
+        typeof s.answerText === "string" ? s.answerText : "";
+    }
+
+    return true;
+  }catch(error){
+    console.warn("Unable to restore quiz session:", error);
+    return false;
+  }
+}
+
+
 loadTimerSettings();
 
 document.getElementById("timerSeconds").addEventListener("change",saveTimerSettings);
@@ -579,7 +734,7 @@ function selectSet(id){
   restartGame();
 }
 
-function showQuestion(message=""){
+function showQuestion(message="", resetTimer=true){
   const qbox=document.getElementById("question");
   const answerBox=document.getElementById("answer");
   document.getElementById("feedback").replaceChildren();
@@ -621,7 +776,8 @@ function showQuestion(message=""){
   answerBox.disabled=false;
   document.getElementById("checkBtn").classList.remove("hidden");
   document.getElementById("nextBtn").classList.add("hidden");
-  startQuestionTimer();
+  startQuestionTimer(resetTimer);
+  saveQuizSession();
 
   if(message){
     const note=document.createElement("div");
@@ -915,25 +1071,67 @@ function restartGame(){
   showQuestion();
 }
 
+
 function toggleRamble(){
-  ramble=!ramble;
-  document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
+  ramble = !ramble;
+
+  document.getElementById("rambleBtn").textContent =
+    ramble ? "⏸ PAUSE QUIZ" : "▶ RESUME QUIZ";
+
   if(ramble){
-    if(order.length===0)shuffleQuestions();
-    showQuestion("▶ Quiz resumed.");
+    if(order.length === 0){
+      shuffleQuestions();
+      current = 0;
+      score = 0;
+      attempts = [];
+      roundSaved = false;
+      timerRemaining = saveTimerSettings();
+      showQuestion("▶ Quiz resumed.");
+    }else if(answered){
+      document.getElementById("feedback").textContent =
+        "▶ Quiz resumed. Press NEXT QUESTION to continue.";
+      stopQuestionTimer();
+    }else{
+      startQuestionTimer(false);
+      document.getElementById("feedback").textContent =
+        "▶ Quiz resumed.";
+    }
   }else{
-    document.getElementById("feedback").textContent="⏸ Quiz paused.";
+    stopQuestionTimer();
+    document.getElementById("feedback").textContent =
+      "⏸ Quiz paused.";
   }
+
+  saveQuizSession();
 }
 
+
 function showTab(tab){
-  ["play","manage","backup"].forEach(name=>{
-    document.getElementById(name+"Panel").classList.toggle("hidden",name!==tab);
-    const buttonId=name==="play"?"playTab":name==="manage"?"manageTab":"backupTab";
-    document.getElementById(buttonId).classList.toggle("active",name===tab);
+  activeTab = tab;
+
+  ["play", "manage", "backup"].forEach(name => {
+    document.getElementById(name + "Panel")
+      .classList.toggle("hidden", name !== tab);
+
+    const buttonId =
+      name === "play" ? "playTab" :
+      name === "manage" ? "manageTab" : "backupTab";
+
+    document.getElementById(buttonId)
+      .classList.toggle("active", name === tab);
   });
 
-  if(tab==="manage"){
+  if(tab !== "play"){
+    stopQuestionTimer();
+    document.getElementById("timerStatus").textContent =
+      "⏸ Timer paused — you are outside the Quiz screen.";
+  } else {
+    if(!answered && ramble && order.length > 0){
+      startQuestionTimer(false);
+    }
+  }
+
+  if(tab === "manage"){
     renderQuestions();
     renderSetPicker();
     renderSets();
@@ -1546,7 +1744,10 @@ renderQuestions();
 renderSetPicker();
 renderSets();
 renderQuizHistory();
-restartGame();
+
+if(!restoreQuizSession()){
+  restartGame();
+}
 </script>
 </body>
 </html>
