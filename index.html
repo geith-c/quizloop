@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#07152f">
-<title>Quiz Loop — Smart Recall</title>
+<title>Ramble Quiz — Smart Recall</title>
 <style>
 :root{
   color-scheme:dark;
@@ -114,13 +114,13 @@ hr{border:0;border-top:1px solid var(--line)}
 <div class="container">
 <div class="app-topbar">
 <button id="homeButton" class="home-button hidden" onclick="showTab('home')" aria-label="Go to Home" title="Home">⌂</button>
-<h1>🧠 QUIZ LOOP</h1>
+<h1>🧠 RAMBLE QUIZ</h1>
 </div>
 <p class="subtitle">Smart Recall · Practice · Repeat · Master</p>
 
 <section id="homePanel">
 <div class="panel">
-<h2>Welcome to Quiz Loop</h2>
+<h2>Welcome to Ramble Quiz</h2>
 <p class="small">Choose where you want to go. Your questions and progress are saved automatically on this device.</p>
 <div class="home-grid">
 <button class="menu-card" onclick="showTab('play')"><span class="menu-icon">🎮</span><strong>Quiz</strong><small>Practice and test your recall</small></button>
@@ -200,6 +200,27 @@ hr{border:0;border-top:1px solid var(--line)}
 <button class="main" id="saveQuestionBtn" onclick="saveQuestion()">➕ Add Question</button>
 <button class="secondary hidden" id="cancelQuestionBtn" onclick="cancelQuestionEdit()">Cancel</button>
 </div>
+</details>
+<details id="bulkImportDetails">
+<summary>📋 Bulk Paste Importer</summary>
+<p class="small">Paste a title for the set, then paste your questions and answers. Every question must end with <b>?</b>. Each non-empty line after a question is a separate correct answer until the next question. Numbering such as 1. or 2) is optional and will be removed automatically.</p>
+<label for="bulkTitleInput">Set Name (optional)</label>
+<input id="bulkTitleInput" placeholder="Example: Bible Review Set">
+<label for="bulkPasteInput">Questions and Answers</label>
+<textarea id="bulkPasteInput" rows="10" placeholder="What is the first question?
+First correct answer
+Second correct answer
+
+What is the next question?
+1. First answer
+2) Second answer"></textarea>
+<div class="row">
+<button class="main" type="button" onclick="previewBulkImport()">👀 Preview Import</button>
+<button class="secondary" type="button" onclick="clearBulkImport()">Clear</button>
+</div>
+<p id="bulkImportStatus" class="small"></p>
+<div id="bulkPreviewList"></div>
+<button id="bulkSaveBtn" class="main" type="button" onclick="saveBulkImport()" disabled style="width:100%;margin-top:10px">💾 Save Selected Questions</button>
 </details>
 <details id="questionBrowserDetails">
 <summary>⌕ Browse Question Bank</summary>
@@ -406,12 +427,12 @@ function toggleSetDropdown(){
   const list=document.getElementById("setDropdownList"),button=document.getElementById("setDropdownButton"),opening=list.classList.contains("hidden");
   list.classList.toggle("hidden",!opening);button.setAttribute("aria-expanded",String(opening));
 }
-function selectSet(id){selectedSetId=id;document.getElementById("setDropdownList").classList.add("hidden");document.getElementById("setDropdownButton").setAttribute("aria-expanded","false");renderSetSelect();restartGame();}
+function selectSet(id){selectedSetId=id;document.getElementById("setDropdownList").classList.add("hidden");document.getElementById("setDropdownButton").setAttribute("aria-expanded","false");renderSetSelect();restartGame("reset");}
 function showQuestion(message="",resetTimer=true){
   const qbox=document.getElementById("question"),answerBox=document.getElementById("answer");document.getElementById("feedback").replaceChildren();document.getElementById("result").classList.add("hidden");document.getElementById("game").classList.remove("hidden");
-  if(order.length===0){qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";answerBox.value="";answerBox.disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");document.getElementById("progress").textContent="Question: 0/0";document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round: "+round;stopQuestionTimer();timerRemaining=saveTimerSettings();updateTimerDisplay();return;}
+  if(order.length===0){qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";answerBox.value="";answerBox.disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");document.getElementById("progress").textContent="Question: 0/0";document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;stopQuestionTimer();timerRemaining=saveTimerSettings();updateTimerDisplay();return;}
   if(current>=order.length){if(saveCompletedQuiz())finishRound();return;}
-  answered=false;const q=currentQuestion();if(!q){restartGame();return;}qbox.textContent=(current+1)+". "+q.question;document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round: "+round;answerBox.value="";answerBox.disabled=false;document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");startQuestionTimer(resetTimer);saveQuizSession();
+  answered=false;const q=currentQuestion();if(!q){restartGame();return;}qbox.textContent=(current+1)+". "+q.question;document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;answerBox.value="";answerBox.disabled=false;document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");startQuestionTimer(resetTimer);saveQuizSession();
   if(message){const note=document.createElement("div");note.className="green";note.textContent=message;document.getElementById("feedback").appendChild(note);}
 }
 function checkAnswer(){
@@ -440,7 +461,7 @@ function finishRound(){
     const yourAnswerTitle=document.createElement("strong");yourAnswerTitle.textContent="Your Answer:";card.appendChild(yourAnswerTitle);const yourAnswer=document.createElement("div");yourAnswer.className="preview";yourAnswer.style.margin="8px 0 14px";yourAnswer.textContent=item.userAnswer||"(No answer)";card.appendChild(yourAnswer);
     const correctTitle=document.createElement("strong");correctTitle.textContent="Correct Answers:";card.appendChild(correctTitle);item.answers.forEach((answer,answerIndex)=>{const line=document.createElement("div");line.className="answer-result "+(answer.correct?"green":"red");line.textContent=(answer.correct?"✅ ":"❌ ")+(answerIndex+1)+". "+answer.text;card.appendChild(line);});review.appendChild(card);
   });result.appendChild(review);
-  const playAgain=document.createElement("button");playAgain.className="main";playAgain.style.width="100%";playAgain.style.marginTop="16px";playAgain.textContent="🔄 REVIEW AND PLAY AGAIN";playAgain.onclick=restartGame;result.appendChild(playAgain);
+  const playAgain=document.createElement("button");playAgain.className="main";playAgain.style.width="100%";playAgain.style.marginTop="16px";playAgain.textContent="🔄 PLAY AGAIN · START NEXT ROUND";playAgain.onclick=()=>restartGame("next");result.appendChild(playAgain);
   const backToSets=document.createElement("button");backToSets.className="secondary";backToSets.style.width="100%";backToSets.style.marginTop="10px";backToSets.textContent="📚 CHOOSE ANOTHER SET";backToSets.onclick=()=>showTab("sets");result.appendChild(backToSets);
 }
 function renderQuizHistory(){
@@ -457,7 +478,14 @@ function renderQuizHistory(){
   });
 }
 function deleteQuizRecord(id){if(!confirm("Delete this saved quiz record?"))return;const previousHistory=quizHistory;quizHistory=quizHistory.filter(record=>record.id!==id);if(persistQuizHistory())renderQuizHistory();else quizHistory=previousHistory;}
-function restartGame(){stopQuestionTimer();current=0;score=0;round=1;answered=false;roundSaved=false;attempts=[];document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";shuffleQuestions();showQuestion();}
+function restartGame(mode="same"){
+  stopQuestionTimer();
+  if(mode==="next") round=Math.max(1,Number(round)||1)+1;
+  else if(mode==="reset") round=1;
+  current=0;score=0;answered=false;roundSaved=false;attempts=[];
+  document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
+  shuffleQuestions();showQuestion();saveQuizSession();
+}
 function toggleRamble(){
   ramble=!ramble;document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
   if(ramble){if(order.length===0){shuffleQuestions();current=0;score=0;attempts=[];roundSaved=false;timerRemaining=saveTimerSettings();showQuestion("▶ Quiz resumed.");}
@@ -479,6 +507,61 @@ function showTab(tab){
   if(tab==="history")renderQuizHistory();
   if(tab==="play")renderSetSelect();
   window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function stripLeadingItemNumber(text){return String(text).replace(/^\s*\d+\s*[.)]\s*/,"").trim();}
+function parseBulkAnswers(text){return String(text).replace(/\r/g,"").split("\n").map(stripLeadingItemNumber).filter(line=>line&&!/^---$/.test(line));}
+let bulkPreviewItems=[];
+function previewBulkImport(){
+  const raw=document.getElementById("bulkPasteInput").value.replace(/\r/g,"");
+  const lines=raw.split("\n").map(line=>line.trim());
+  const parsed=[];let i=0,ignored=0;
+  while(i<lines.length){
+    if(!lines[i]){i++;continue;}
+    if(!lines[i].endsWith("?")){ignored++;i++;continue;}
+    const question=stripLeadingItemNumber(lines[i]);i++;
+    const answerLines=[];
+    while(i<lines.length&&!lines[i].endsWith("?")){
+      if(lines[i]){const answer=stripLeadingItemNumber(lines[i]);if(answer&&!/^---$/.test(answer))answerLines.push(answer);}
+      i++;
+    }
+    parsed.push({id:makeId("bulk"),question,answers:answerLines,selected:true,error:answerLines.length?"":"No answer found. Put each correct answer on its own line."});
+  }
+  bulkPreviewItems=parsed;renderBulkPreview();
+  const status=document.getElementById("bulkImportStatus");
+  status.textContent=parsed.length?`Found ${parsed.length} question(s). Each non-empty answer line is a separate correct answer. ${ignored?ignored+" line(s) outside a question/answer section were ignored.":""}`:"No questions found. Make sure each question ends with a question mark (?).";
+}
+function renderBulkPreview(){
+  const list=document.getElementById("bulkPreviewList");list.replaceChildren();
+  bulkPreviewItems.forEach((item,index)=>{
+    const card=document.createElement("div");card.className="item";
+    const top=document.createElement("div");top.className="row";
+    const checkLabel=document.createElement("label");checkLabel.className="pick";checkLabel.style.flex="1";checkLabel.style.margin="0";
+    const check=document.createElement("input");check.type="checkbox";check.checked=item.selected;check.onchange=()=>{item.selected=check.checked;updateBulkSaveButton();};
+    const checkText=document.createElement("span");checkText.textContent=`Import question ${index+1}`;checkLabel.append(check,checkText);
+    const del=document.createElement("button");del.className="danger";del.type="button";del.textContent="🗑 Remove";del.onclick=()=>{bulkPreviewItems=bulkPreviewItems.filter(x=>x.id!==item.id);renderBulkPreview();};top.append(checkLabel,del);card.appendChild(top);
+    const qLabel=document.createElement("label");qLabel.textContent="Question";card.appendChild(qLabel);
+    const qInput=document.createElement("textarea");qInput.rows=2;qInput.value=item.question;qInput.oninput=()=>{item.question=qInput.value;updateBulkSaveButton();};card.appendChild(qInput);
+    const aLabel=document.createElement("label");aLabel.textContent="Correct Answers (one per line)";card.appendChild(aLabel);
+    const aInput=document.createElement("textarea");aInput.rows=Math.max(2,Math.min(7,item.answers.length));aInput.value=item.answers.join("\n");aInput.placeholder="One correct answer per line; numbering is optional";
+    const error=document.createElement("p");error.className="small";error.style.color="var(--amber)";error.textContent=item.error||"";
+    aInput.oninput=()=>{item.answers=parseBulkAnswers(aInput.value);item.error=item.answers.length?"":"Add at least one correct answer.";error.textContent=item.error;updateBulkSaveButton();};card.appendChild(aInput);card.appendChild(error);list.appendChild(card);
+  });
+  updateBulkSaveButton();
+}
+function updateBulkSaveButton(){const btn=document.getElementById("bulkSaveBtn");if(btn)btn.disabled=!bulkPreviewItems.some(item=>item.selected&&item.question.trim()&&item.answers.some(answer=>answer.trim()));}
+function clearBulkImport(){document.getElementById("bulkTitleInput").value="";document.getElementById("bulkPasteInput").value="";document.getElementById("bulkImportStatus").textContent="";document.getElementById("bulkPreviewList").replaceChildren();bulkPreviewItems=[];updateBulkSaveButton();}
+function saveBulkImport(){
+  const chosen=bulkPreviewItems.filter(item=>item.selected&&item.question.trim()&&item.answers.some(answer=>answer.trim()));
+  if(!chosen.length){alert("Select at least one question and make sure it has at least one answer.");return;}
+  const title=document.getElementById("bulkTitleInput").value.trim();
+  const added=chosen.map(item=>({id:makeId("q"),question:stripLeadingItemNumber(item.question),answers:item.answers.map(stripLeadingItemNumber).filter(Boolean)})).filter(item=>item.question&&item.answers.length);
+  if(!added.length){alert("No valid questions were found to save.");return;}
+  const newIds=added.map(q=>q.id);questions.push(...added);
+  if(title){const existing=sets.find(set=>normalize(set.name)===normalize(title));if(existing)existing.questionIds=Array.from(new Set([...existing.questionIds,...newIds]));else sets.push({id:makeId("set"),name:title,questionIds:newIds});}
+  persist();renderQuestions();renderSetPicker();renderSets();renderSetSelect();
+  document.getElementById("bulkImportStatus").textContent=`Saved ${added.length} question(s) to the Question Bank${title?` and added them to set “${title}”`:""}.`;
+  document.getElementById("bulkPreviewList").replaceChildren();bulkPreviewItems=[];updateBulkSaveButton();document.getElementById("bulkPasteInput").value="";
 }
 
 function saveQuestion(){
@@ -513,7 +596,7 @@ function saveSet(){
 }
 function cancelSetEdit(){editingSetId=null;document.getElementById("setNameInput").value="";document.getElementById("saveSetBtn").textContent="➕ Create Set";document.getElementById("cancelSetBtn").classList.add("hidden");renderSetPicker();}
 function editSet(id){const set=sets.find(s=>s.id===id);if(!set)return;editingSetId=id;document.getElementById("setNameInput").value=set.name;document.getElementById("saveSetBtn").textContent="💾 Save Set";document.getElementById("cancelSetBtn").classList.remove("hidden");renderSetPicker();document.getElementById("setEditorDetails").open=true;document.getElementById("setNameInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
-function playSet(id){selectedSetId=id;renderSetSelect();showTab("play");restartGame();}
+function playSet(id){selectedSetId=id;renderSetSelect();showTab("play");restartGame("reset");}
 function deleteSet(id){const set=sets.find(s=>s.id===id);if(!set||!confirm('Delete the set "'+set.name+'"? The questions will remain in the Question Bank.'))return;sets=sets.filter(s=>s.id!==id);if(selectedSetId===id)selectedSetId="all";if(editingSetId===id)cancelSetEdit();persist();renderSets();renderSetPicker();renderSetSelect();restartGame();}
 function renderSets(){
   const list=document.getElementById("setList");list.replaceChildren();if(sets.length===0){const p=document.createElement("p");p.className="small";p.textContent="You have not created any custom sets yet. Create one above.";list.appendChild(p);return;}
@@ -559,7 +642,7 @@ function importBackup(){
 }
 function deleteEverything(){if(!confirm("Are you sure you want to delete all questions and sets? Download a backup first if needed."))return;questions=[];sets=[];selectedSetId="all";persist();cancelQuestionEdit();cancelSetEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();}
 document.getElementById("answer").addEventListener("keydown",function(event){if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){event.preventDefault();if(answered)nextQuestion();else checkAnswer();}});
-renderSetSelect();renderQuestions();renderSetPicker();renderSets();renderQuizHistory();
+renderSetSelect();renderQuestions();renderSetPicker();renderSets();renderQuizHistory();updateBulkSaveButton();
 if(!restoreQuizSession())restartGame();
 showTab("home");
 </script>
