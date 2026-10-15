@@ -1,1 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ramble Quiz - Custom Sets</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:12px;font-family:Arial,sans-serif;background:#f1f5f9;color:#1e293b}
+.container{max-width:800px;margin:12px auto;padding:18px;background:white;border-radius:16px;box-shadow:0 4px 20px #0001}
+h1{text-align:center;color:#2563eb}
+.subtitle{text-align:center;color:#64748b;font-size:14px}
+.tabs,.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button{padding:12px;border:0;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.5}
+.tabs button,.row button{flex:1}
+.tab,.secondary{background:#e2e8f0;color:#1e293b}
+.tab.active,.main{background:#2563eb;color:white}
+.danger{background:#fee2e2;color:#991b1b}
+.panel,.item{padding:13px;border:1px solid #e2e8f0;border-radius:11px;margin:12px 0;background:#f8fafc}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,textarea,select{width:100%;padding:12px;font:16px Arial,sans-serif;border:2px solid #cbd5e1;border-radius:9px;background:white;color:#1e293b}
+textarea{resize:vertical;line-height:1.5}
+.small{font-size:13px;color:#64748b;line-height:1.5}
+.info{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:16px 0;font-size:14px}
+#question{font-size:22px;font-weight:bold;line-height:1.5;margin:24px 0;overflow-wrap:anywhere}
+#feedback{margin-top:15px;line-height:1.6;overflow-wrap:anywhere}
+.answer-result{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0;font-weight:bold}
+.green{color:#15803d}.red{color:#dc2626}.amber{color:#b45309}
+.hidden{display:none!important}
+.item h3{font-size:16px;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0}
+.preview{white-space:pre-wrap;overflow-wrap:anywhere;color:#475569;font-size:14px}
+.pill{display:inline-block;background:#dbeafe;color:#1d4ed8;padding:5px 8px;border-radius:20px;font-size:12px}
+.pick{display:flex;align-items:flex-start;gap:9px;padding:9px 3px;border-bottom:1px solid #e2e8f0;font-weight:normal}
+.pick input{width:19px;height:19px;margin:0;flex-shrink:0}
+.pick span{overflow-wrap:anywhere}
+#result{text-align:center;line-height:1.8}
+@media(max-width:480px){.container{padding:12px}#question{font-size:20px}}
 
+#timerSettings{margin:8px 0}
+.timer-row{display:flex;align-items:center;gap:7px;flex-wrap:nowrap;width:100%}
+.timer-row input[type="checkbox"]{width:15px;height:15px;margin:0;padding:0;flex:0 0 15px}
+.timer-row input[type="number"]{width:58px;min-width:0;padding:5px 3px;font-size:14px;text-align:center;border:1px solid #cbd5e1}
+.timer-label{font-size:11px;color:#64748b;white-space:nowrap}
+#timerValue{margin-left:auto;font-size:28px;line-height:1;color:#2563eb;font-variant-numeric:tabular-nums;white-space:nowrap}
+#timerStatus{margin:4px 0;font-size:10px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🧠 RAMBLE QUIZ</h1>
+<p class="subtitle">Question Bank • Custom Sets • Practice • Recall • Repeat</p>
+
+<div class="tabs">
+<button class="tab active" id="playTab" onclick="showTab('play')">🎮 Quiz</button>
+<button class="tab" id="manageTab" onclick="showTab('manage')">📚 Questions & Sets</button>
+<button class="tab" id="backupTab" onclick="showTab('backup')">💾 Backup</button>
+</div>
+
+<!-- QUIZ SECTION -->
+<section id="playPanel">
+<div class="panel">
+<label for="setSelect">Select a Question Set</label>
+<select id="setSelect" onchange="selectSet(this.value)"></select>
+<p class="small">Only questions in the selected set will be played. You can also choose the entire Question Bank.</p>
+</div>
+
+<div class="info">
+<span id="progress">Question: 0/0</span>
+<span id="score">Correct Answers: 0</span>
+<span id="round">Round: 1</span>
+</div>
+
+<div id="game">
+<div id="timerSettings">
+<div class="timer-row">
+<input id="timerEnabled" type="checkbox" checked aria-label="Enable timer">
+<input id="timerSeconds" type="number" min="1" max="3600" value="30" aria-label="Timer duration in seconds">
+<span class="timer-label">sec</span>
+<input id="organEnabled" type="checkbox" checked aria-label="Enable sound">
+<span class="timer-label">Sound</span>
+<strong id="timerValue">00:30</strong>
+</div>
+<p id="timerStatus" class="small">Timer settings</p>
+</div>
+
+<div id="question">Add a question in Questions & Sets to get started.</div>
+<textarea id="answer" rows="6" placeholder="Type your answer here..."></textarea>
+<button class="main" id="checkBtn" onclick="checkAnswer()" style="width:100%;margin-top:10px">CHECK ANSWER</button>
+<div id="feedback" aria-live="polite"></div>
+<button class="secondary hidden" id="nextBtn" onclick="nextQuestion()" style="width:100%;margin-top:10px">NEXT QUESTION →</button>
+</div>
+
+<div id="result" class="hidden"></div>
+
+<div class="row">
+<button class="secondary" id="rambleBtn" onclick="toggleRamble()">⏸ PAUSE QUIZ</button>
+<button class="secondary" onclick="restartGame()">🔄 RESTART</button>
+</div>
+
+<!-- SAVED QUIZ HISTORY -->
+<div class="panel" id="historyPanel">
+<h2>📜 Saved Quiz History</h2>
+<p class="small">Completed quizzes are saved automatically, including scores, your answers, correct answers, and incorrect answers.</p>
+<div id="historyList"></div>
+</div>
+</section>
+
+<!-- QUESTION BANK AND CUSTOM SETS -->
+<section id="managePanel" class="hidden">
+<div class="panel">
+<h2>📚 Question Bank</h2>
+<p class="small">Add all your questions here. Then choose which sets should include each question.</p>
+
+<label for="questionInput">Question</label>
+<textarea id="questionInput" rows="2" placeholder="Type your question..."></textarea>
+
+<label for="answersInput">Required Correct Answers</label>
+<textarea id="answersInput" rows="7" placeholder="Enter the complete correct answer..."></textarea>
+<p class="small">If there are multiple separate answers, place <b>---</b> on its own line between them. If the answer is one long response, do not use this separator.</p>
+
+<div class="row">
+<button class="main" id="saveQuestionBtn" onclick="saveQuestion()">➕ Add Question</button>
+<button class="secondary hidden" id="cancelQuestionBtn" onclick="cancelQuestionEdit()">Cancel</button>
+</div>
+
+<input id="questionSearch" placeholder="🔎 Search questions..." oninput="renderQuestions()">
+<div class="info"><span id="questionCount">0 questions</span></div>
+<div id="questionList"></div>
+</div>
+
+<div class="panel">
+<h2>🗂️ Custom Question Sets</h2>
+<p class="small">Create your own sets and choose any number of questions. There is no fixed limit. A question can belong to multiple sets.</p>
+
+<label for="setNameInput">Set Name</label>
+<input id="setNameInput" placeholder="Example: Ephesians 4:13-15">
+
+<label>Select Questions to Include</label>
+<div class="row">
+<button class="secondary" onclick="setAllChecks(true)">☑ Select All</button>
+<button class="secondary" onclick="setAllChecks(false)">☐ Clear Selection</button>
+</div>
+<div id="setQuestionPicker"></div>
+
+<div class="info"><span id="pickedCount">0 questions selected</span></div>
+<div class="row">
+<button class="main" id="saveSetBtn" onclick="saveSet()">➕ Create Set</button>
+<button class="secondary hidden" id="cancelSetBtn" onclick="cancelSetEdit()">Cancel</button>
+</div>
+</div>
+
+<div class="panel">
+<h2>📂 My Question Sets</h2>
+<div id="setList"></div>
+</div>
+</section>
+
+<!-- BACKUP AND RESTORE -->
+<section id="backupPanel" class="hidden">
+<div class="panel">
+<h2>💾 Automatic Saving</h2>
+<p>Your Question Bank and custom sets are saved automatically in the browser you use.</p>
+<p class="small">To prevent data loss, download a backup regularly. Browser data may be lost if you clear your browser data or switch browsers or devices.</p>
+<button class="main" onclick="exportBackup()" style="width:100%">⬇️ DOWNLOAD BACKUP</button>
+</div>
+
+<div class="panel">
+<h2>📥 Restore Backup</h2>
+<button class="secondary" type="button" onclick="document.getElementById('importFile').click()" style="width:100%">📂 CHOOSE BACKUP FILE</button>
+<input id="importFile" type="file" accept=".json,application/json" class="hidden" onchange="showSelectedBackup()">
+<p id="selectedBackupName" class="small">No file selected.</p>
+<button class="main" type="button" onclick="importBackup()" style="width:100%;margin-top:10px">📥 RESTORE BACKUP</button>
+</div>
+
+<div class="panel">
+<h2>⚠️ Delete All Data</h2>
+<button class="danger" onclick="deleteEverything()" style="width:100%">DELETE ALL QUESTIONS AND SETS</button>
+</div>
+</section>
+</div>
+
+<script>
+const STORAGE_KEY = "ramble_quiz_custom_sets_v3";
+const OLD_KEY_V2 = "rambleMemoryQuiz_v2";
+const OLD_KEY_V1 = "rambleMemoryQuiz_v1";
+const HISTORY_KEY = "ramble_quiz_history_v1";
+const TIMER_SETTINGS_KEY = "ramble_quiz_timer_settings_v1";
+
+let quizHistory = [];
+let roundSaved = false;
+
+function loadQuizHistory(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+    return Array.isArray(saved)?saved:[];
+  }catch(error){
+    console.error("Quiz history loading error:",error);
+    return [];
+  }
+}
+
+function persistQuizHistory(){
+  try{
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(quizHistory));
+    return true;
+  }catch(error){
+    alert("Unable to save quiz history. Your browser storage may be full.");
+    return false;
+  }
+}
+
+quizHistory=loadQuizHistory();
+
+const starterQuestions=[{
+  id:"q_starter",
+  question:"Ano ang paksa ng unang linggo ng Pebrero 2026?",
+  answers:["ANG KABUTIHAN SA KAPATID NA MAY PINAGSISIKAPANG MARATING (GOAL) NA KAUNLARAN NG BUHAY SA PANGINOON AYON SA BIBLIA"]
+}];
+
+let questions=[];
+let sets=[];
+let editingQuestionId=null;
+let editingSetId=null;
+let selectedSetId="all";
+let order=[];
+let current=0;
+let score=0;
+let round=1;
+let answered=false;
+let ramble=true;
+let attempts=[];
+
+let timerInterval=null;
+let timerRemaining=30;
+let audioContext=null;
+
+function loadTimerSettings(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(TIMER_SETTINGS_KEY));
+    if(saved&&typeof saved==="object"){
+      document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(saved.seconds)||30));
+      document.getElementById("timerEnabled").checked=saved.enabled!==false;
+      document.getElementById("organEnabled").checked=saved.organ!==false;
+    }
+  }catch(e){
+    console.warn("Timer settings error:",e);
+  }
+}
+
+function saveTimerSettings(){
+  const input=document.getElementById("timerSeconds");
+  let seconds=Number(input.value);
+  if(!Number.isFinite(seconds))seconds=30;
+  seconds=Math.floor(Math.max(1,Math.min(3600,seconds)));
+  input.value=seconds;
+
+  try{
+    localStorage.setItem(TIMER_SETTINGS_KEY,JSON.stringify({
+      seconds,
+      enabled:document.getElementById("timerEnabled").checked,
+      organ:document.getElementById("organEnabled").checked
+    }));
+  }catch(e){
+    console.warn("Unable to save timer settings:",e);
+  }
+  return seconds;
+}
+
+function formatTime(seconds){
+  const mins=Math.floor(seconds/60);
+  const secs=seconds%60;
+  return String(mins).padStart(2,"0")+":"+String(secs).padStart(2,"0");
+}
+
+function pluralize(count,singular,plural=singular+"s"){
+  return `${count} ${count===1?singular:plural}`;
+}
+
+function answerLabel(count){
+  return pluralize(count,"Correct Answer");
+}
+
+function updateTimerDisplay(){
+  const display=document.getElementById("timerValue");
+  const settings=document.getElementById("timerEnabled");
+  display.textContent=formatTime(timerRemaining);
+  display.style.color=timerRemaining<=5?"#dc2626":"#2563eb";
+  if(!settings.checked){
+    display.textContent="OFF";
+    display.style.color="";
+  }
+}
+
+function getAudioContext(){
+  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  if(!AudioContextClass)return null;
+  if(!audioContext)audioContext=new AudioContextClass();
+  if(audioContext.state==="suspended"){
+    audioContext.resume().catch(e=>console.warn("Audio resume error:",e));
+  }
+  return audioContext;
+}
+
+function playOrganNote(frequency,duration=0.35){
+  if(!document.getElementById("organEnabled").checked)return;
+  const ctx=getAudioContext();
+  if(!ctx)return;
+
+  try{
+    const now=ctx.currentTime;
+    const oscillator=ctx.createOscillator();
+    const gain=ctx.createGain();
+    oscillator.type="sine";
+    oscillator.frequency.setValueAtTime(frequency,now);
+    gain.gain.setValueAtTime(0.0001,now);
+    gain.gain.linearRampToValueAtTime(0.12,now+0.04);
+    gain.gain.setValueAtTime(0.12,now+duration*0.6);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+duration);
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+    oscillator.start(now);
+    oscillator.stop(now+duration);
+  }catch(e){
+    console.warn("Organ playback error:",e);
+  }
+}
+
+function testOrgan(){
+  const ctx=getAudioContext();
+  if(!ctx){
+    alert("Your browser does not support the Web Audio API.");
+    return;
+  }
+  playOrganNote(880,0.6);
+}
+
+function playTimeoutOrgan(){
+  if(!document.getElementById("organEnabled").checked)return;
+  const notes=[880,784,659,523,392];
+  notes.forEach((frequency,index)=>{
+    setTimeout(()=>playOrganNote(frequency,0.55),index*420);
+  });
+}
+
+function stopQuestionTimer(){
+  if(timerInterval!==null){
+    clearInterval(timerInterval);
+    timerInterval=null;
+  }
+}
+
+function startQuestionTimer(){
+  stopQuestionTimer();
+  timerRemaining=saveTimerSettings();
+  updateTimerDisplay();
+
+  const enabled=document.getElementById("timerEnabled").checked;
+  const status=document.getElementById("timerStatus");
+
+  if(!enabled){
+    status.textContent="Timer is turned off.";
+    return;
+  }
+
+  status.textContent="⏱️ Timer ready.";
+  timerInterval=setInterval(()=>{
+    if(answered||!ramble)return;
+    timerRemaining--;
+    updateTimerDisplay();
+
+    if(timerRemaining>0&&document.getElementById("organEnabled").checked){
+      playOrganNote(timerRemaining%2===0?523:659,0.16);
+    }
+
+    if(timerRemaining<=0){
+      stopQuestionTimer();
+      handleTimeout();
+    }
+  },1000);
+}
+
+function handleTimeout(){
+  if(answered)return;
+  const q=currentQuestion();
+  if(!q)return;
+  const input=document.getElementById("answer").value.trim();
+
+  if(input){
+    checkAnswer();
+    const feedback=document.getElementById("feedback");
+    const notice=document.createElement("p");
+    notice.className="amber";
+    notice.style.fontWeight="bold";
+    notice.textContent="⏰ TIME'S UP! Your answer has been checked.";
+    feedback.prepend(notice);
+    document.getElementById("timerStatus").textContent="Time is up. Press NEXT QUESTION to continue.";
+    playTimeoutOrgan();
+    return;
+  }
+
+  answered=true;
+  stopQuestionTimer();
+  const feedback=document.getElementById("feedback");
+  feedback.replaceChildren();
+
+  const heading=document.createElement("div");
+  heading.className="red";
+  heading.style.fontWeight="bold";
+  heading.style.fontSize="20px";
+  heading.textContent="⏰ TIME'S UP! NO ANSWER.";
+  feedback.appendChild(heading);
+
+  const subtitle=document.createElement("p");
+  subtitle.textContent="Here are the correct answers:";
+  feedback.appendChild(subtitle);
+
+  const title=document.createElement("strong");
+  title.textContent="CORRECT ANSWERS:";
+  feedback.appendChild(title);
+
+  q.answers.forEach((answer,index)=>{
+    const line=document.createElement("div");
+    line.className="answer-result green";
+    line.textContent="📖 "+(index+1)+". "+answer;
+    feedback.appendChild(line);
+  });
+
+  attempts.push({
+    question:q.question,
+    userAnswer:"",
+    allCorrect:false,
+    timedOut:true,
+    answers:q.answers.map(answer=>({text:answer,correct:false}))
+  });
+
+  document.getElementById("answer").disabled=true;
+  document.getElementById("checkBtn").classList.add("hidden");
+  document.getElementById("nextBtn").classList.remove("hidden");
+  document.getElementById("timerStatus").textContent="Time is up. Press NEXT QUESTION to continue.";
+  playTimeoutOrgan();
+}
+
+function makeId(prefix="id"){
+  return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8);
+}
+
+function validQuestion(q){
+  return q&&typeof q.id==="string"&&typeof q.question==="string"&&
+    Array.isArray(q.answers)&&q.answers.length>0&&
+    q.answers.every(a=>typeof a==="string"&&a.trim().length>0);
+}
+
+function validData(data){
+  return data&&Array.isArray(data.questions)&&data.questions.every(validQuestion)&&
+    Array.isArray(data.sets)&&data.sets.every(s=>
+      s&&typeof s.id==="string"&&typeof s.name==="string"&&
+      Array.isArray(s.questionIds)&&s.questionIds.every(id=>typeof id==="string"));
+}
+
+function loadData(){
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const data=JSON.parse(saved);
+      if(validData(data))return data;
+    }
+
+    for(const oldKey of [OLD_KEY_V2,OLD_KEY_V1]){
+      const old=localStorage.getItem(oldKey);
+      if(old){
+        const parsed=JSON.parse(old);
+        const oldQuestions=Array.isArray(parsed)?parsed:
+          (parsed&&Array.isArray(parsed.questions)?parsed.questions:null);
+
+        if(oldQuestions&&oldQuestions.every(q=>
+          q&&typeof q.question==="string"&&Array.isArray(q.answers))){
+          return {
+            questions:oldQuestions.map(q=>({
+              id:makeId("q"),question:q.question,answers:q.answers.map(String)
+            })),
+            sets:[]
+          };
+        }
+      }
+    }
+  }catch(e){
+    console.error("Data loading error:",e);
+  }
+
+  return {
+    questions:starterQuestions.map(q=>({...q,answers:[...q.answers]})),
+    sets:[]
+  };
+}
+
+const loaded=loadData();
+questions=loaded.questions;
+sets=loaded.sets.map(s=>({
+  ...s,
+  questionIds:s.questionIds.filter(id=>loaded.questions.some(q=>q.id===id))
+}));
+
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));
+  }catch(e){
+    alert("Unable to save data in the browser. Download a backup if possible.");
+  }
+}
+
+function normalize(text){
+  return String(text).normalize("NFKC").toLowerCase()
+    .replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"")
+    .replace(/\s+/g," ").trim();
+}
+
+function parseAnswers(text){
+  return text.split(/^\s*---\s*$/m).map(s=>s.trim()).filter(Boolean);
+}
+
+function getActiveQuestions(){
+  if(selectedSetId==="all")return questions;
+  const set=sets.find(s=>s.id===selectedSetId);
+  if(!set)return questions;
+  return set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean);
+}
+
+function shuffleQuestions(){
+  const active=getActiveQuestions();
+  order=active.map(q=>q.id);
+  for(let i=order.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [order[i],order[j]]=[order[j],order[i]];
+  }
+}
+
+function currentQuestion(){
+  const id=order[current];
+  return questions.find(q=>q.id===id);
+}
+
+loadTimerSettings();
+
+document.getElementById("timerSeconds").addEventListener("change",saveTimerSettings);
+
+document.getElementById("timerEnabled").addEventListener("change",function(){
+  saveTimerSettings();
+  if(!answered&&current<order.length)showQuestion();
+});
+
+document.getElementById("organEnabled").addEventListener("change",saveTimerSettings);
+
+function renderSetSelect(){
+  const select=document.getElementById("setSelect");
+  select.replaceChildren();
+
+  const allOption=document.createElement("option");
+  allOption.value="all";
+  allOption.textContent="📚 All Questions ("+questions.length+")";
+  select.appendChild(allOption);
+
+  sets.forEach(s=>{
+    const option=document.createElement("option");
+    option.value=s.id;
+    const count=s.questionIds.filter(id=>questions.some(q=>q.id===id)).length;
+    option.textContent=s.name+" ("+count+" questions)";
+    select.appendChild(option);
+  });
+
+  if(selectedSetId!=="all"&&!sets.some(s=>s.id===selectedSetId)){
+    selectedSetId="all";
+  }
+  select.value=selectedSetId;
+}
+
+function selectSet(id){
+  selectedSetId=id;
+  restartGame();
+}
+
+function showQuestion(message=""){
+  const qbox=document.getElementById("question");
+  const answerBox=document.getElementById("answer");
+  document.getElementById("feedback").replaceChildren();
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+
+  if(order.length===0){
+    qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";
+    answerBox.value="";
+    answerBox.disabled=true;
+    document.getElementById("checkBtn").classList.add("hidden");
+    document.getElementById("nextBtn").classList.add("hidden");
+    document.getElementById("progress").textContent="Question: 0/0";
+    document.getElementById("score").textContent="Correct Answers: "+score;
+    document.getElementById("round").textContent="Round: "+round;
+    stopQuestionTimer();
+    timerRemaining=saveTimerSettings();
+    updateTimerDisplay();
+    return;
+  }
+
+  if(current>=order.length){
+    if(saveCompletedQuiz())finishRound();
+    return;
+  }
+
+  answered=false;
+  const q=currentQuestion();
+  if(!q){
+    restartGame();
+    return;
+  }
+
+  qbox.textContent=(current+1)+". "+q.question;
+  document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;
+  document.getElementById("score").textContent="Correct Answers: "+score;
+  document.getElementById("round").textContent="Round: "+round;
+  answerBox.value="";
+  answerBox.disabled=false;
+  document.getElementById("checkBtn").classList.remove("hidden");
+  document.getElementById("nextBtn").classList.add("hidden");
+  startQuestionTimer();
+
+  if(message){
+    const note=document.createElement("div");
+    note.className="green";
+    note.textContent=message;
+    document.getElementById("feedback").appendChild(note);
+  }
+}
+
+function checkAnswer(){
+  if(answered||!ramble)return;
+  const input=document.getElementById("answer").value.trim();
+  const feedback=document.getElementById("feedback");
+  const q=currentQuestion();
+  if(!q)return;
+
+  if(!input){
+    feedback.textContent="⚠️ Please enter your answer first.";
+    feedback.className="amber";
+    return;
+  }
+
+  stopQuestionTimer();
+  const userNorm=normalize(input);
+  const results=q.answers.map(answer=>{
+    const expected=normalize(answer);
+    return {answer,complete:expected.length>0&&userNorm.includes(expected)};
+  });
+  const completeCount=results.filter(r=>r.complete).length;
+  const allCorrect=completeCount===q.answers.length;
+
+  attempts.push({
+    question:q.question,
+    userAnswer:input,
+    allCorrect:allCorrect,
+    answers:results.map(r=>({text:r.answer,correct:r.complete}))
+  });
+
+  answered=true;
+  feedback.replaceChildren();
+
+  const heading=document.createElement("div");
+  heading.className=allCorrect?"green":completeCount>0?"amber":"red";
+  heading.style.fontWeight="bold";
+  heading.style.fontSize="18px";
+  heading.textContent=allCorrect?"✅ CORRECT! COMPLETE ANSWER!":
+    completeCount>0?"⚠️ PARTIALLY CORRECT!":"❌ INCORRECT OR INCOMPLETE ANSWER!";
+  feedback.appendChild(heading);
+
+  const title=document.createElement("div");
+  title.style.fontWeight="bold";
+  title.style.marginTop="12px";
+  title.textContent="ALL CORRECT ANSWERS:";
+  feedback.appendChild(title);
+
+  results.forEach((r,i)=>{
+    const line=document.createElement("div");
+    line.className="answer-result "+(r.complete?"green":"red");
+    line.textContent=`${r.complete?"✓":"✗"} ${i+1}. ${r.answer}`;
+    feedback.appendChild(line);
+  });
+
+  if(allCorrect)score++;
+  document.getElementById("score").textContent="Correct Answers: "+score;
+  document.getElementById("answer").disabled=true;
+  document.getElementById("checkBtn").classList.add("hidden");
+  document.getElementById("nextBtn").classList.remove("hidden");
+}
+
+function nextQuestion(){
+  if(!answered||!ramble)return;
+  stopQuestionTimer();
+  current++;
+  showQuestion();
+}
+
+function saveCompletedQuiz(){
+  if(roundSaved)return true;
+
+  const selectedSet=sets.find(s=>s.id===selectedSetId);
+  const record={
+    id:makeId("history"),
+    date:new Date().toISOString(),
+    setName:selectedSet?selectedSet.name:"Entire Question Bank",
+    round:round,
+    score:score,
+    total:order.length,
+    attempts:JSON.parse(JSON.stringify(attempts))
+  };
+
+  quizHistory.unshift(record);
+  if(!persistQuizHistory()){
+    quizHistory.shift();
+    alert("Quiz history could not be saved. Please download a backup.");
+    return false;
+  }
+
+  roundSaved=true;
+  renderQuizHistory();
+  return true;
+}
+
+function finishRound(){
+  document.getElementById("game").classList.add("hidden");
+  const result=document.getElementById("result");
+  result.classList.remove("hidden");
+  result.replaceChildren();
+
+  const heading=document.createElement("h2");
+  heading.textContent="🏆 SET COMPLETED!";
+  result.appendChild(heading);
+
+  const scoreText=document.createElement("h3");
+  scoreText.textContent="Score: "+score+" / "+order.length;
+  result.appendChild(scoreText);
+
+  const summary=document.createElement("p");
+  summary.textContent="Round: "+round+" | Correct: "+score+" | Incorrect or incomplete: "+(order.length-score);
+  result.appendChild(summary);
+
+  const reviewTitle=document.createElement("h2");
+  reviewTitle.textContent="📖 ANSWER REVIEW";
+  result.appendChild(reviewTitle);
+
+  attempts.forEach((item,index)=>{
+    const card=document.createElement("div");
+    card.className="item";
+    card.style.textAlign="left";
+
+    const question=document.createElement("h3");
+    question.textContent=(index+1)+". "+item.question;
+    card.appendChild(question);
+
+    const status=document.createElement("p");
+    status.className=item.allCorrect?"green":"red";
+    status.style.fontWeight="bold";
+    status.textContent=item.timedOut?"⏰ TIME EXPIRED":item.allCorrect?"✅ CORRECT ANSWER":"❌ INCORRECT OR INCOMPLETE";
+    card.appendChild(status);
+
+    const yourAnswerTitle=document.createElement("strong");
+    yourAnswerTitle.textContent="Your Answer:";
+    card.appendChild(yourAnswerTitle);
+
+    const yourAnswer=document.createElement("div");
+    yourAnswer.className="preview";
+    yourAnswer.style.margin="8px 0 14px";
+    yourAnswer.textContent=item.userAnswer||"(No answer)";
+    card.appendChild(yourAnswer);
+
+    const correctTitle=document.createElement("strong");
+    correctTitle.textContent="Correct Answers:";
+    card.appendChild(correctTitle);
+
+    item.answers.forEach((answer,answerIndex)=>{
+      const line=document.createElement("div");
+      line.className="answer-result "+(answer.correct?"green":"red");
+      line.textContent=(answer.correct?"✅ ":"❌ ")+(answerIndex+1)+". "+answer.text;
+      card.appendChild(line);
+    });
+
+    result.appendChild(card);
+  });
+
+  const playAgain=document.createElement("button");
+  playAgain.className="main";
+  playAgain.style.width="100%";
+  playAgain.style.marginTop="16px";
+  playAgain.textContent="🔄 REVIEW AND PLAY AGAIN";
+  playAgain.onclick=restartGame;
+  result.appendChild(playAgain);
+
+  const backToSets=document.createElement("button");
+  backToSets.className="secondary";
+  backToSets.style.width="100%";
+  backToSets.style.marginTop="10px";
+  backToSets.textContent="📚 CHOOSE ANOTHER SET";
+  backToSets.onclick=()=>showTab("manage");
+  result.appendChild(backToSets);
+}
+
+function renderQuizHistory(){
+  const list=document.getElementById("historyList");
+  if(!list)return;
+  list.replaceChildren();
+
+  if(quizHistory.length===0){
+    const empty=document.createElement("p");
+    empty.className="small";
+    empty.textContent="No saved quizzes yet.";
+    list.appendChild(empty);
+    return;
+  }
+
+  quizHistory.forEach(record=>{
+    const card=document.createElement("div");
+    card.className="item";
+
+    const title=document.createElement("h3");
+    title.textContent=record.setName;
+    card.appendChild(title);
+
+    const date=document.createElement("p");
+    date.className="small";
+    date.textContent=new Date(record.date).toLocaleString();
+    card.appendChild(date);
+
+    const scoreText=document.createElement("p");
+    scoreText.textContent=`Score: ${record.score} / ${record.total}`;
+    card.appendChild(scoreText);
+
+    const roundText=document.createElement("p");
+    roundText.textContent=`Round ${record.round}`;
+    card.appendChild(roundText);
+
+    const details=document.createElement("details");
+    const summary=document.createElement("summary");
+    summary.textContent="View Questions and Answers";
+    details.appendChild(summary);
+
+    (record.attempts||[]).forEach((item,index)=>{
+      const section=document.createElement("div");
+      section.className="item";
+
+      const question=document.createElement("h3");
+      question.textContent=`${index+1}. ${item.question}`;
+      section.appendChild(question);
+
+      const status=document.createElement("p");
+      status.className=item.allCorrect?"green":"red";
+      status.textContent=item.timedOut?"Time expired":item.allCorrect?"Correct":"Incorrect or incomplete";
+      section.appendChild(status);
+
+      const yourAnswerTitle=document.createElement("strong");
+      yourAnswerTitle.textContent="Your Answer:";
+      section.appendChild(yourAnswerTitle);
+
+      const yourAnswer=document.createElement("div");
+      yourAnswer.className="preview";
+      yourAnswer.textContent=item.userAnswer||"(No answer)";
+      section.appendChild(yourAnswer);
+
+      const correctTitle=document.createElement("strong");
+      correctTitle.textContent="Correct Answers:";
+      section.appendChild(correctTitle);
+
+      (item.answers||[]).forEach((answer,answerIndex)=>{
+        const line=document.createElement("div");
+        line.className="answer-result "+(answer.correct?"green":"red");
+        line.textContent=`${answer.correct?"✓":"✗"} ${answerIndex+1}. ${answer.text}`;
+        section.appendChild(line);
+      });
+
+      details.appendChild(section);
+    });
+
+    card.appendChild(details);
+
+    const deleteButton=document.createElement("button");
+    deleteButton.className="danger";
+    deleteButton.textContent="🗑️ Delete Record";
+    deleteButton.style.width="100%";
+    deleteButton.style.marginTop="10px";
+    deleteButton.onclick=()=>deleteQuizRecord(record.id);
+    card.appendChild(deleteButton);
+
+    list.appendChild(card);
+  });
+}
+
+function deleteQuizRecord(id){
+  if(!confirm("Delete this saved quiz record?"))return;
+  const previousHistory=quizHistory;
+  quizHistory=quizHistory.filter(record=>record.id!==id);
+  if(persistQuizHistory()){
+    renderQuizHistory();
+  }else{
+    quizHistory=previousHistory;
+  }
+}
+
+function restartGame(){
+  stopQuestionTimer();
+  current=0;
+  score=0;
+  round=1;
+  answered=false;
+  roundSaved=false;
+  attempts=[];
+  document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
+  shuffleQuestions();
+  showQuestion();
+}
+
+function toggleRamble(){
+  ramble=!ramble;
+  document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
+  if(ramble){
+    if(order.length===0)shuffleQuestions();
+    showQuestion("▶ Quiz resumed.");
+  }else{
+    document.getElementById("feedback").textContent="⏸ Quiz paused.";
+  }
+}
+
+function showTab(tab){
+  ["play","manage","backup"].forEach(name=>{
+    document.getElementById(name+"Panel").classList.toggle("hidden",name!==tab);
+    const buttonId=name==="play"?"playTab":name==="manage"?"manageTab":"backupTab";
+    document.getElementById(buttonId).classList.toggle("active",name===tab);
+  });
+
+  if(tab==="manage"){
+    renderQuestions();
+    renderSetPicker();
+    renderSets();
+  }
+}
+
+function saveQuestion(){
+  const question=document.getElementById("questionInput").value.trim();
+  const answers=parseAnswers(document.getElementById("answersInput").value);
+  if(!question){alert("Please enter a question.");return;}
+  if(answers.length===0){alert("Please enter at least one correct answer.");return;}
+
+  if(editingQuestionId){
+    const q=questions.find(q=>q.id===editingQuestionId);
+    if(q){q.question=question;q.answers=answers;}
+  }else{
+    questions.push({id:makeId("q"),question,answers});
+  }
+
+  persist();
+  cancelQuestionEdit();
+  renderQuestions();
+  renderSetPicker();
+  renderSets();
+  renderSetSelect();
+  restartGame();
+}
+
+function cancelQuestionEdit(){
+  editingQuestionId=null;
+  document.getElementById("questionInput").value="";
+  document.getElementById("answersInput").value="";
+  document.getElementById("saveQuestionBtn").textContent="➕ Add Question";
+  document.getElementById("cancelQuestionBtn").classList.add("hidden");
+}
+
+function editQuestion(id){
+  const q=questions.find(q=>q.id===id);
+  if(!q)return;
+  editingQuestionId=id;
+  document.getElementById("questionInput").value=q.question;
+  document.getElementById("answersInput").value=q.answers.join("\n---\n");
+  document.getElementById("saveQuestionBtn").textContent="💾 Save Changes";
+  document.getElementById("cancelQuestionBtn").classList.remove("hidden");
+  document.getElementById("questionInput").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function deleteQuestion(id){
+  const q=questions.find(q=>q.id===id);
+  if(!q||!confirm("Delete this question? It will also be removed from every set that contains it."))return;
+  questions=questions.filter(q=>q.id!==id);
+  sets.forEach(s=>s.questionIds=s.questionIds.filter(qid=>qid!==id));
+  persist();
+  cancelQuestionEdit();
+  renderQuestions();
+  renderSetPicker();
+  renderSets();
+  renderSetSelect();
+  restartGame();
+}
+
+function renderQuestions(){
+  const list=document.getElementById("questionList");
+  list.replaceChildren();
+  const query=normalize(document.getElementById("questionSearch").value);
+  let count=0;
+
+  questions.forEach((q,index)=>{
+    if(query&&!normalize(q.question).includes(query))return;
+    count++;
+
+    const card=document.createElement("div");
+    card.className="item";
+
+    const badge=document.createElement("span");
+    badge.className="pill";
+    badge.textContent="Question "+(index+1)+" • "+q.answers.length+" answers";
+    card.appendChild(badge);
+
+    const title=document.createElement("h3");
+    title.textContent=q.question;
+    card.appendChild(title);
+
+    const preview=document.createElement("div");
+    preview.className="preview";
+    preview.textContent=q.answers.map((a,i)=>(i+1)+". "+a).join("\n\n");
+    card.appendChild(preview);
+
+    const row=document.createElement("div");
+    row.className="row";
+
+    const edit=document.createElement("button");
+    edit.className="secondary";
+    edit.textContent="✏️ Edit";
+    edit.onclick=()=>editQuestion(q.id);
+
+    const del=document.createElement("button");
+    del.className="danger";
+    del.textContent="🗑️ Delete";
+    del.onclick=()=>deleteQuestion(q.id);
+
+    row.append(edit,del);
+    card.appendChild(row);
+    list.appendChild(card);
+  });
+
+  document.getElementById("questionCount").textContent=count+" of "+questions.length+" questions";
+
+  if(count===0){
+    const p=document.createElement("p");
+    p.className="small";
+    p.textContent="No matching questions found.";
+    list.appendChild(p);
+  }
+}
+
+function renderSetPicker(){
+  const picker=document.getElementById("setQuestionPicker");
+  picker.replaceChildren();
+  const selected=new Set();
+
+  if(editingSetId){
+    const existing=sets.find(s=>s.id===editingSetId);
+    if(existing)existing.questionIds.forEach(id=>selected.add(id));
+  }
+
+  if(questions.length===0){
+    const p=document.createElement("p");
+    p.className="small";
+    p.textContent="Add questions to the Question Bank first.";
+    picker.appendChild(p);
+    updatePickedCount();
+    return;
+  }
+
+  questions.forEach((q,index)=>{
+    const label=document.createElement("label");
+    label.className="pick";
+
+    const cb=document.createElement("input");
+    cb.type="checkbox";
+    cb.className="set-question-check";
+    cb.value=q.id;
+    cb.checked=selected.has(q.id);
+    cb.onchange=updatePickedCount;
+
+    const text=document.createElement("span");
+    text.textContent=(index+1)+". "+q.question;
+
+    label.append(cb,text);
+    picker.appendChild(label);
+  });
+
+  updatePickedCount();
+}
+
+function setAllChecks(checked){
+  document.querySelectorAll(".set-question-check").forEach(cb=>cb.checked=checked);
+  updatePickedCount();
+}
+
+function updatePickedCount(){
+  const count=document.querySelectorAll(".set-question-check:checked").length;
+  const label=document.getElementById("pickedCount");
+  if(label)label.textContent=count+" questions selected";
+}
+
+function saveSet(){
+  const name=document.getElementById("setNameInput").value.trim();
+  const questionIds=Array.from(document.querySelectorAll(".set-question-check:checked")).map(cb=>cb.value);
+
+  if(!name){alert("Please enter a set name.");return;}
+  if(questionIds.length===0){alert("Select at least one question for this set.");return;}
+
+  if(editingSetId){
+    const set=sets.find(s=>s.id===editingSetId);
+    if(set){set.name=name;set.questionIds=questionIds;}
+  }else{
+    sets.push({id:makeId("set"),name,questionIds});
+  }
+
+  persist();
+  cancelSetEdit();
+  renderSets();
+  renderSetPicker();
+  renderSetSelect();
+}
+
+function cancelSetEdit(){
+  editingSetId=null;
+  document.getElementById("setNameInput").value="";
+  document.getElementById("saveSetBtn").textContent="➕ Create Set";
+  document.getElementById("cancelSetBtn").classList.add("hidden");
+  renderSetPicker();
+}
+
+function editSet(id){
+  const set=sets.find(s=>s.id===id);
+  if(!set)return;
+  editingSetId=id;
+  document.getElementById("setNameInput").value=set.name;
+  document.getElementById("saveSetBtn").textContent="💾 Save Set";
+  document.getElementById("cancelSetBtn").classList.remove("hidden");
+  renderSetPicker();
+  document.getElementById("setNameInput").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function playSet(id){
+  selectedSetId=id;
+  renderSetSelect();
+  showTab("play");
+  restartGame();
+}
+
+function deleteSet(id){
+  const set=sets.find(s=>s.id===id);
+  if(!set||!confirm('Delete the set "'+set.name+'"? The questions will remain in the Question Bank.'))return;
+  sets=sets.filter(s=>s.id!==id);
+  if(selectedSetId===id)selectedSetId="all";
+  if(editingSetId===id)cancelSetEdit();
+  persist();
+  renderSets();
+  renderSetPicker();
+  renderSetSelect();
+  restartGame();
+}
+
+function renderSets(){
+  const list=document.getElementById("setList");
+  list.replaceChildren();
+
+  if(sets.length===0){
+    const p=document.createElement("p");
+    p.className="small";
+    p.textContent="You have not created any custom sets yet. Create one above.";
+    list.appendChild(p);
+    return;
+  }
+
+  sets.forEach(set=>{
+    const card=document.createElement("div");
+    card.className="item";
+    const count=set.questionIds.filter(id=>questions.some(q=>q.id===id)).length;
+
+    const badge=document.createElement("span");
+    badge.className="pill";
+    badge.textContent=count+" questions";
+    card.appendChild(badge);
+
+    const title=document.createElement("h3");
+    title.textContent=set.name;
+    card.appendChild(title);
+
+    const row=document.createElement("div");
+    row.className="row";
+
+    const play=document.createElement("button");
+    play.className="main";
+    play.textContent="▶ Play Set";
+    play.onclick=()=>playSet(set.id);
+
+    const edit=document.createElement("button");
+    edit.className="secondary";
+    edit.textContent="✏️ Edit";
+    edit.onclick=()=>editSet(set.id);
+
+    const del=document.createElement("button");
+    del.className="danger";
+    del.textContent="🗑️ Delete";
+    del.onclick=()=>deleteSet(set.id);
+
+    row.append(play,edit,del);
+    card.appendChild(row);
+
+    const names=set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean);
+    const preview=document.createElement("div");
+    preview.className="preview";
+    preview.textContent=names.length?names.map((q,i)=>(i+1)+". "+q.question).join("\n"):"No questions remain in this set.";
+    card.appendChild(preview);
+    list.appendChild(card);
+  });
+}
+
+async function exportBackup(){
+  try{
+    const data={
+      version:3,
+      exportedAt:new Date().toISOString(),
+      questions:questions,
+      sets:sets,
+      history:quizHistory,
+      timerSettings:{
+        seconds:saveTimerSettings(),
+        enabled:document.getElementById("timerEnabled").checked,
+        organ:document.getElementById("organEnabled").checked
+      }
+    };
+
+    const json=JSON.stringify(data,null,2);
+    const blob=new Blob([json],{type:"application/json"});
+    const fileName="ramble-quiz-backup-"+new Date().toISOString().slice(0,10)+".json";
+    const file=new File([blob],fileName,{type:"application/json"});
+
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      await navigator.share({files:[file],title:"Ramble Quiz Backup"});
+      return;
+    }
+
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=url;
+    link.download=fileName;
+    link.textContent="Download Backup File";
+    link.style.display="block";
+    link.style.padding="16px";
+    link.style.margin="12px 0";
+    link.style.background="#2563eb";
+    link.style.color="white";
+    link.style.textAlign="center";
+    link.style.borderRadius="9px";
+
+    const oldLink=document.getElementById("backupDownloadLink");
+    if(oldLink)oldLink.remove();
+
+    link.id="backupDownloadLink";
+    link.onclick=()=>setTimeout(()=>URL.revokeObjectURL(url),60000);
+    document.querySelector("#backupPanel .panel").appendChild(link);
+
+    alert("Your backup is ready. Tap the new Download Backup File link.");
+  }catch(error){
+    if(error.name==="AbortError")return;
+    console.error("Backup error:",error);
+    alert("Backup error: "+error.message);
+  }
+}
+
+function showSelectedBackup(){
+  const file=document.getElementById("importFile").files[0];
+  document.getElementById("selectedBackupName").textContent=file?"Selected file: "+file.name:"No file selected.";
+}
+
+function importBackup(){
+  const file=document.getElementById("importFile").files[0];
+
+  if(!file){
+    alert("Please tap CHOOSE BACKUP FILE first.");
+    return;
+  }
+
+  if(!file.name.toLowerCase().endsWith(".json")){
+    alert("Only JSON backup files can be restored.");
+    return;
+  }
+
+  const reader=new FileReader();
+
+  reader.onerror=()=>alert("Unable to read the file. Please choose another backup file.");
+
+  reader.onload=function(){
+    try{
+      const data=JSON.parse(reader.result);
+      if(!data||!Array.isArray(data.questions))throw new Error("Invalid questions");
+
+      const importedQuestions=data.questions.map(q=>{
+        if(!q||typeof q.question!=="string"||!Array.isArray(q.answers)||
+          q.answers.length===0||!q.answers.every(a=>typeof a==="string"&&a.trim())){
+          throw new Error("Invalid question");
+        }
+        return {
+          id:typeof q.id==="string"&&q.id?q.id:makeId("q"),
+          question:q.question,
+          answers:q.answers
+        };
+      });
+
+      const importedSets=Array.isArray(data.sets)?data.sets.map(s=>{
+        if(!s||typeof s.name!=="string"||!Array.isArray(s.questionIds)){
+          throw new Error("Invalid set");
+        }
+        return {
+          id:typeof s.id==="string"&&s.id?s.id:makeId("set"),
+          name:s.name,
+          questionIds:s.questionIds.filter(id=>
+            typeof id==="string"&&importedQuestions.some(q=>q.id===id))
+        };
+      }):[];
+
+      const importedHistory=Array.isArray(data.history)?data.history:[];
+
+      if(!confirm("This will replace your current questions and sets. Make sure you have a backup of your current data. Continue?"))return;
+
+      const previousQuestions=questions;
+      const previousSets=sets;
+      const previousHistory=quizHistory;
+
+      questions=importedQuestions;
+      sets=importedSets;
+      quizHistory=importedHistory;
+      selectedSetId="all";
+
+      try{
+        localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));
+        localStorage.setItem(HISTORY_KEY,JSON.stringify(quizHistory));
+      }catch(saveError){
+        questions=previousQuestions;
+        sets=previousSets;
+        quizHistory=previousHistory;
+        alert("Unable to save the restored data. Browser storage may be full. No changes were made.");
+        return;
+      }
+
+      if(data.timerSettings){
+        const timer=data.timerSettings;
+        document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(timer.seconds)||30));
+        document.getElementById("timerEnabled").checked=timer.enabled!==false;
+        document.getElementById("organEnabled").checked=timer.organ!==false;
+        saveTimerSettings();
+      }
+
+      cancelQuestionEdit();
+      cancelSetEdit();
+      renderQuestions();
+      renderSetPicker();
+      renderSets();
+      renderSetSelect();
+      renderQuizHistory();
+      restartGame();
+
+      document.getElementById("importFile").value="";
+      showSelectedBackup();
+
+      alert("✅ Backup restored successfully!\nQuestions: "+questions.length+"\nCustom sets: "+sets.length);
+    }catch(error){
+      console.error("Restore error:",error);
+      alert("The backup JSON file is invalid or unreadable. Please choose a backup created by Ramble Quiz.");
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+function deleteEverything(){
+  if(!confirm("Are you sure you want to delete all questions and sets? Download a backup first if needed."))return;
+  questions=[];
+  sets=[];
+  selectedSetId="all";
+  persist();
+  cancelQuestionEdit();
+  cancelSetEdit();
+  renderQuestions();
+  renderSetPicker();
+  renderSets();
+  renderSetSelect();
+  restartGame();
+}
+
+document.getElementById("answer").addEventListener("keydown",function(event){
+  if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){
+    event.preventDefault();
+    if(answered)nextQuestion();
+    else checkAnswer();
+  }
+});
+
+renderSetSelect();
+renderQuestions();
+renderSetPicker();
+renderSets();
+renderQuizHistory();
+restartGame();
+</script>
+</body>
+</html>
