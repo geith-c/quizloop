@@ -44,6 +44,50 @@ textarea{resize:vertical;line-height:1.5}
 .timer-label{font-size:11px;color:#64748b;white-space:nowrap}
 #timerValue{margin-left:auto;font-size:28px;line-height:1;color:#2563eb;font-variant-numeric:tabular-nums;white-space:nowrap}
 #timerStatus{margin:4px 0;font-size:10px}
+
+.timer-duration{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  flex:0 0 auto;
+}
+
+.timer-sound-buttons{
+  display:flex;
+  justify-content:center;
+  gap:4px;
+}
+
+.sound-btn{
+  width:25px;
+  height:22px;
+  min-width:25px;
+  padding:2px;
+  border-radius:5px;
+  color:white;
+  font-size:12px;
+  line-height:1;
+  flex:0 0 25px;
+}
+
+.sound-btn.on{
+  background:#2563eb;
+  color:white;
+}
+
+.sound-btn.off{
+  background:#000000;
+  color:white;
+}
+
+.timer-input-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+}
+
 </style>
 </head>
 <body>
@@ -72,17 +116,39 @@ textarea{resize:vertical;line-height:1.5}
 </div>
 
 <div id="game">
+
 <div id="timerSettings">
-<div class="timer-row">
-<input id="timerEnabled" type="checkbox" checked aria-label="Enable timer">
-<input id="timerSeconds" type="number" min="1" max="3600" value="30" aria-label="Timer duration in seconds">
-<span class="timer-label">sec</span>
-<input id="organEnabled" type="checkbox" checked aria-label="Enable sound">
-<span class="timer-label">Sound</span>
-<strong id="timerValue">00:30</strong>
+  <div class="timer-row">
+    <input id="timerEnabled" type="checkbox" checked
+      aria-label="Enable timer">
+
+    <div class="timer-duration">
+      <div class="timer-sound-buttons">
+        <button type="button" id="pianoButton"
+          class="sound-btn on" onclick="togglePiano()"
+          aria-label="Toggle piano" aria-pressed="true">P</button>
+        <button type="button" id="violinButton"
+          class="sound-btn off" onclick="toggleViolin()"
+          aria-label="Toggle violin" aria-pressed="false">V</button>
+      </div>
+
+      <div class="timer-input-row">
+        <input id="timerSeconds" type="number" min="1"
+          max="3600" value="30" aria-label="Timer duration in seconds">
+        <span class="timer-label">sec</span>
+      </div>
+    </div>
+
+    <input id="organEnabled" type="checkbox" checked
+      class="hidden" aria-label="Enable piano sound">
+    <input id="violinEnabled" type="checkbox"
+      class="hidden" aria-label="Enable violin sound">
+
+    <strong id="timerValue">00:30</strong>
+  </div>
+  <p id="timerStatus" class="small">Timer settings</p>
 </div>
-<p id="timerStatus" class="small">Timer settings</p>
-</div>
+
 
 <div id="question">Add a question in Questions & Sets to get started.</div>
 <textarea id="answer" rows="6" placeholder="Type your answer here..."></textarea>
@@ -98,7 +164,6 @@ textarea{resize:vertical;line-height:1.5}
 <button class="secondary" onclick="restartGame()">🔄 RESTART</button>
 </div>
 
-<!-- SAVED QUIZ HISTORY -->
 <div class="panel" id="historyPanel">
 <h2>📜 Saved Quiz History</h2>
 <p class="small">Completed quizzes are saved automatically, including scores, your answers, correct answers, and incorrect answers.</p>
@@ -106,7 +171,6 @@ textarea{resize:vertical;line-height:1.5}
 </div>
 </section>
 
-<!-- QUESTION BANK AND CUSTOM SETS -->
 <section id="managePanel" class="hidden">
 <div class="panel">
 <h2>📚 Question Bank</h2>
@@ -156,7 +220,6 @@ textarea{resize:vertical;line-height:1.5}
 </div>
 </section>
 
-<!-- BACKUP AND RESTORE -->
 <section id="backupPanel" class="hidden">
 <div class="panel">
 <h2>💾 Automatic Saving</h2>
@@ -243,10 +306,25 @@ function loadTimerSettings(){
       document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(saved.seconds)||30));
       document.getElementById("timerEnabled").checked=saved.enabled!==false;
       document.getElementById("organEnabled").checked=saved.organ!==false;
+      document.getElementById("violinEnabled").checked = saved.violin === true;
     }
   }catch(e){
     console.warn("Timer settings error:",e);
   }
+}
+function updateSoundButtons(){
+const pianoOn = document.getElementById("organEnabled").checked;
+const violinOn = document.getElementById("violinEnabled").checked;
+const pianoButton = document.getElementById("pianoButton");
+const violinButton = document.getElementById("violinButton");
+
+pianoButton.classList.toggle("on", pianoOn);
+pianoButton.classList.toggle("off", !pianoOn);
+pianoButton.setAttribute("aria-pressed", String(pianoOn));
+
+violinButton.classList.toggle("on", violinOn);
+violinButton.classList.toggle("off", !violinOn);
+violinButton.setAttribute("aria-pressed", String(violinOn));
 }
 
 function saveTimerSettings(){
@@ -260,13 +338,39 @@ function saveTimerSettings(){
     localStorage.setItem(TIMER_SETTINGS_KEY,JSON.stringify({
       seconds,
       enabled:document.getElementById("timerEnabled").checked,
-      organ:document.getElementById("organEnabled").checked
+      organ:document.getElementById("organEnabled").checked,
+      violin:document.getElementById("violinEnabled").checked
     }));
   }catch(e){
     console.warn("Unable to save timer settings:",e);
   }
   return seconds;
 }
+
+function togglePiano(){
+  const piano = document.getElementById("organEnabled");
+  piano.checked = !piano.checked;
+
+  saveTimerSettings();
+  updateSoundButtons();
+
+  if(piano.checked){
+    playOrganNote(880, 0.3);
+  }
+}
+
+function toggleViolin(){
+  const violin = document.getElementById("violinEnabled");
+  violin.checked = !violin.checked;
+
+  saveTimerSettings();
+  updateSoundButtons();
+
+  if(violin.checked){
+    playViolinNote(880, 0.35);
+  }
+}
+
 
 function formatTime(seconds){
   const mins=Math.floor(seconds/60);
@@ -327,6 +431,66 @@ function playOrganNote(frequency,duration=0.35){
   }
 }
 
+function playViolinNote(frequency, duration = 0.3){
+  if(!document.getElementById("violinEnabled").checked) return;
+
+  const ctx = getAudioContext();
+  if(!ctx) return;
+
+  try{
+    const now = ctx.currentTime;
+
+    const oscillator = ctx.createOscillator();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+
+    const vibrato = ctx.createOscillator();
+    const vibratoGain = ctx.createGain();
+
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(2600, now);
+    filter.Q.setValueAtTime(1, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0.075, now + 0.06);
+    gain.gain.setValueAtTime(0.075, now + duration * 0.65);
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      now + duration
+    );
+
+    vibrato.type = "sine";
+    vibrato.frequency.setValueAtTime(5.5, now);
+    vibratoGain.gain.setValueAtTime(6, now);
+
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(oscillator.frequency);
+
+    oscillator.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+      vibrato.disconnect();
+      vibratoGain.disconnect();
+    };
+
+    vibrato.start(now);
+    oscillator.start(now);
+
+    oscillator.stop(now + duration);
+    vibrato.stop(now + duration);
+  }catch(error){
+    console.warn("Violin playback error:", error);
+  }
+}
+  
 function testOrgan(){
   const ctx=getAudioContext();
   if(!ctx){
@@ -422,12 +586,19 @@ function startQuestionTimer(reset = true){
     timerRemaining = Math.max(0, timerRemaining - 1);
     updateTimerDisplay();
 
-    if(
-      timerRemaining > 0 &&
-      document.getElementById("organEnabled").checked
-    ){
-      playOrganNote(timerRemaining % 2 === 0 ? 523 : 659, 0.16);
+    
+    if(timerRemaining > 0){
+      const frequency = timerRemaining % 2 === 0 ? 523 : 659;
+
+      if(document.getElementById("organEnabled").checked){
+        playOrganNote(frequency, 0.16);
+      }
+
+      if(document.getElementById("violinEnabled").checked){
+        playViolinNote(frequency, 0.3);
+      }
     }
+
 
     if(timerRemaining <= 0){
       stopQuestionTimer();
@@ -696,6 +867,7 @@ function restoreQuizSession(){
 
 
 loadTimerSettings();
+updateSoundButtons();
 
 document.getElementById("timerSeconds").addEventListener("change",saveTimerSettings);
 
@@ -704,7 +876,15 @@ document.getElementById("timerEnabled").addEventListener("change",function(){
   if(!answered&&current<order.length)showQuestion();
 });
 
-document.getElementById("organEnabled").addEventListener("change",saveTimerSettings);
+document.getElementById("organEnabled").addEventListener("change",function(){
+saveTimerSettings();
+updateSoundButtons();
+});
+
+document.getElementById("violinEnabled").addEventListener("change",function(){
+saveTimerSettings();
+updateSoundButtons();
+});
 
 function renderSetSelect(){
   const select=document.getElementById("setSelect");
@@ -1531,7 +1711,8 @@ async function exportBackup(){
       timerSettings: {
         seconds: saveTimerSettings(),
         enabled: document.getElementById("timerEnabled").checked,
-        organ: document.getElementById("organEnabled").checked
+        organ: document.getElementById("organEnabled").checked,
+        violin: document.getElementById("violinEnabled").checked
       }
     };
 
@@ -1691,7 +1872,9 @@ function importBackup(){
         document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(timer.seconds)||30));
         document.getElementById("timerEnabled").checked=timer.enabled!==false;
         document.getElementById("organEnabled").checked=timer.organ!==false;
+        document.getElementById("violinEnabled").checked=timer.violin===true;
         saveTimerSettings();
+        updateSoundButtons();
       }
 
       cancelQuestionEdit();
