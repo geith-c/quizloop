@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#07152f">
-<title>Ramble Quiz — Smart Recall</title>
+<title>Quiz Loop — Smart Recall</title>
 <style>
 :root{
   color-scheme:dark;
@@ -114,13 +114,13 @@ hr{border:0;border-top:1px solid var(--line)}
 <div class="container">
 <div class="app-topbar">
 <button id="homeButton" class="home-button hidden" onclick="showTab('home')" aria-label="Go to Home" title="Home">⌂</button>
-<h1>🧠 RAMBLE QUIZ</h1>
+<h1>🧠 QUIZ LOOP</h1>
 </div>
 <p class="subtitle">Smart Recall · Practice · Repeat · Master</p>
 
 <section id="homePanel">
 <div class="panel">
-<h2>Welcome to Ramble Quiz</h2>
+<h2>Welcome to Quiz Loop</h2>
 <p class="small">Choose where you want to go. Your questions and progress are saved automatically on this device.</p>
 <div class="home-grid">
 <button class="menu-card" onclick="showTab('play')"><span class="menu-icon">🎮</span><strong>Quiz</strong><small>Practice and test your recall</small></button>
@@ -637,7 +637,7 @@ function importBackup(){
     try{localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));localStorage.setItem(HISTORY_KEY,JSON.stringify(quizHistory));}catch(saveError){questions=previousQuestions;sets=previousSets;quizHistory=previousHistory;alert("Unable to save the restored data. Browser storage may be full. No changes were made.");return;}
     if(data.timerSettings){const timer=data.timerSettings;document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(timer.seconds)||30));document.getElementById("timerEnabled").checked=timer.enabled!==false;document.getElementById("organEnabled").checked=timer.organ!==false;document.getElementById("violinEnabled").checked=timer.violin===true;saveTimerSettings();updateSoundButtons();}
     cancelQuestionEdit();cancelSetEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();renderQuizHistory();restartGame();document.getElementById("importFile").value="";showSelectedBackup();alert("✅ Backup restored successfully!\nQuestions: "+questions.length+"\nCustom sets: "+sets.length);
-  }catch(error){console.error("Restore error:",error);alert("The backup JSON file is invalid or unreadable. Please choose a backup created by Ramble Quiz.");}};
+  }catch(error){console.error("Restore error:",error);alert("The backup JSON file is invalid or unreadable. Please choose a backup created by Quiz Loop.");}};
   reader.readAsText(file);
 }
 function deleteEverything(){if(!confirm("Are you sure you want to delete all questions and sets? Download a backup first if needed."))return;questions=[];sets=[];selectedSetId="all";persist();cancelQuestionEdit();cancelSetEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();}
