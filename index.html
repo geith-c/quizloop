@@ -168,7 +168,7 @@ textarea{resize:vertical;line-height:1.5}
 <div class="panel">
 <h2>📥 Restore Backup</h2>
 <button class="secondary" type="button" onclick="document.getElementById('importFile').click()" style="width:100%">📂 CHOOSE BACKUP FILE</button>
-<input id="importFile" type="file" accept=".json,application/json" class="hidden" onchange="showSelectedBackup()">
+<input id="importFile" type="file" accept=".json,.rqbackup,application/json,application/octet-stream" class="hidden" onchange="showSelectedBackup()">
 <p id="selectedBackupName" class="small">No file selected.</p>
 <button class="main" type="button" onclick="importBackup()" style="width:100%;margin-top:10px">📥 RESTORE BACKUP</button>
 </div>
@@ -1219,58 +1219,184 @@ function renderSets(){
   });
 }
 
+
+function bytesToBase64(bytes){
+  let binary = "";
+  for(let i = 0; i < bytes.length; i += 8192){
+    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(text){
+  const binary = atob(text);
+  const bytes = new Uint8Array(binary.length);
+  for(let i = 0; i < binary.length; i++){
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function makeBackupKey(password, salt){
+  const material = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt: salt,
+      iterations: 250000,
+      hash: "SHA-256"
+    },
+    material,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptBackupText(text, password){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await makeBackupKey(password, salt);
+
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    new TextEncoder().encode(text)
+  );
+
+  return {
+    format: "ramble-quiz-encrypted-backup-v1",
+    salt: bytesToBase64(salt),
+    iv: bytesToBase64(iv),
+    data: bytesToBase64(new Uint8Array(encrypted))
+  };
+}
+
+async function decryptBackupText(backup, password){
+  const salt = base64ToBytes(backup.salt);
+  const iv = base64ToBytes(backup.iv);
+  const encrypted = base64ToBytes(backup.data);
+  const key = await makeBackupKey(password, salt);
+
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    encrypted
+  );
+
+  return new TextDecoder().decode(decrypted);
+}
+
+
 async function exportBackup(){
   try{
-    const data={
-      version:3,
-      exportedAt:new Date().toISOString(),
-      questions:questions,
-      sets:sets,
-      history:quizHistory,
-      timerSettings:{
-        seconds:saveTimerSettings(),
-        enabled:document.getElementById("timerEnabled").checked,
-        organ:document.getElementById("organEnabled").checked
-      }
-    };
-
-    const json=JSON.stringify(data,null,2);
-    const blob=new Blob([json],{type:"application/json"});
-    const fileName="ramble-quiz-backup-"+new Date().toISOString().slice(0,10)+".json";
-    const file=new File([blob],fileName,{type:"application/json"});
-
-    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-      await navigator.share({files:[file],title:"Ramble Quiz Backup"});
+    if(!window.crypto || !crypto.subtle){
+      alert("Encryption is not available in this environment. Please open the app in an HTTPS browser.");
       return;
     }
 
-    const url=URL.createObjectURL(blob);
-    const link=document.createElement("a");
-    link.href=url;
-    link.download=fileName;
-    link.textContent="Download Backup File";
-    link.style.display="block";
-    link.style.padding="16px";
-    link.style.margin="12px 0";
-    link.style.background="#2563eb";
-    link.style.color="white";
-    link.style.textAlign="center";
-    link.style.borderRadius="9px";
+    const password = prompt(
+      "Create a password for your encrypted backup. Use at least 8 characters:"
+    );
 
-    const oldLink=document.getElementById("backupDownloadLink");
-    if(oldLink)oldLink.remove();
+    if(password === null) return;
 
-    link.id="backupDownloadLink";
-    link.onclick=()=>setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(password.length < 8){
+      alert("Please use a password with at least 8 characters.");
+      return;
+    }
+
+    const confirmPassword = prompt(
+      "Enter your password again to confirm:"
+    );
+
+    if(confirmPassword === null) return;
+
+    if(password !== confirmPassword){
+      alert("The passwords do not match. No backup was created.");
+      return;
+    }
+
+    const data = {
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      questions: questions,
+      sets: sets,
+      history: quizHistory,
+      timerSettings: {
+        seconds: saveTimerSettings(),
+        enabled: document.getElementById("timerEnabled").checked,
+        organ: document.getElementById("organEnabled").checked
+      }
+    };
+
+    const encrypted = await encryptBackupText(
+      JSON.stringify(data),
+      password
+    );
+
+    const blob = new Blob(
+      [JSON.stringify(encrypted)],
+      { type: "application/octet-stream" }
+    );
+
+    const fileName =
+      "ramble-quiz-encrypted-backup-" +
+      new Date().toISOString().slice(0, 10) +
+      ".rqbackup";
+
+    const file = new File([blob], fileName, {
+      type: "application/octet-stream"
+    });
+
+    if(navigator.share && navigator.canShare &&
+       navigator.canShare({ files: [file] })){
+      await navigator.share({
+        files: [file],
+        title: "Encrypted Ramble Quiz Backup"
+      });
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.textContent = "Download Encrypted Backup";
+    link.style.display = "block";
+    link.style.padding = "16px";
+    link.style.margin = "12px 0";
+    link.style.background = "#2563eb";
+    link.style.color = "white";
+    link.style.textAlign = "center";
+    link.style.borderRadius = "9px";
+
+    const oldLink = document.getElementById("backupDownloadLink");
+    if(oldLink) oldLink.remove();
+
+    link.id = "backupDownloadLink";
+    link.onclick = () => setTimeout(
+      () => URL.revokeObjectURL(url), 60000
+    );
+
     document.querySelector("#backupPanel .panel").appendChild(link);
 
-    alert("Your backup is ready. Tap the new Download Backup File link.");
+    alert("Your encrypted backup is ready. Tap the new download link.");
+
   }catch(error){
-    if(error.name==="AbortError")return;
-    console.error("Backup error:",error);
-    alert("Backup error: "+error.message);
+    if(error.name === "AbortError") return;
+    console.error("Encrypted backup error:", error);
+    alert("Failed to create the backup. " + error.message);
   }
 }
+
 
 function showSelectedBackup(){
   const file=document.getElementById("importFile").files[0];
@@ -1285,19 +1411,34 @@ function importBackup(){
     return;
   }
 
-  if(!file.name.toLowerCase().endsWith(".json")){
-    alert("Only JSON backup files can be restored.");
-    return;
-  }
-
-  const reader=new FileReader();
+  const reader = new FileReader();
 
   reader.onerror=()=>alert("Unable to read the file. Please choose another backup file.");
 
-  reader.onload=function(){
+  reader.onload=async function(){
     try{
-      const data=JSON.parse(reader.result);
+      const rawText = String(reader.result || "");
+      const parsed = JSON.parse(rawText);
+      let data;
+
+      if(parsed && parsed.format === "ramble-quiz-encrypted-backup-v1"){
+        const password = prompt("Enter your backup password:");
+        if(password === null) return;
+
+        try{
+          const decrypted = await decryptBackupText(parsed, password);
+          data = JSON.parse(decrypted);
+        }catch(error){
+          alert("Unable to open the backup. The password may be incorrect or the file may be corrupted.");
+          return;
+        }
+      }else{
+        if(!confirm("This is an unencrypted JSON backup. Do you want to restore it anyway?")) return;
+        data = parsed;
+      }
+
       if(!data||!Array.isArray(data.questions))throw new Error("Invalid questions");
+    
 
       const importedQuestions=data.questions.map(q=>{
         if(!q||typeof q.question!=="string"||!Array.isArray(q.answers)||
