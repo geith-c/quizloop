@@ -108,12 +108,435 @@ hr{border:0;border-top:1px solid var(--line)}
  #question{margin:17px 0}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Theme toggle */
+.theme-toggle{
+  position:absolute;
+  right:0;
+  top:4px;
+  width:42px;
+  height:42px;
+  padding:0;
+  font-size:19px;
+  background:#10294b;
+  border:1px solid #2a527c;
+  color:#d8efff;
+  border-radius:12px;
+}
+
+/* LIGHT MODE */
+body.light-mode{
+  color-scheme:light;
+  --bg:#eef8ff;
+  --bg2:#e5f3ff;
+  --surface:#ffffff;
+  --surface2:#eaf5ff;
+  --line:#c5e2f8;
+  --blue:#258bff;
+  --blue2:#54b7ff;
+  --ice:#d9f0ff;
+  --text:#163653;
+  --muted:#66829d;
+  --green:#07865e;
+  --red:#d93658;
+  --amber:#986000;
+
+  background:
+    radial-gradient(ellipse at 50% -20%,
+      #16477f 0,
+      transparent 48%),
+    linear-gradient(160deg,#eaf6ff,#f8fcff 60%,#eaf6ff);
+  color:var(--text);
+}
+
+body.light-mode .container{
+  background:linear-gradient(155deg,#fffffffa,#f2f9ffff);
+  border-color:#c5e2f8;
+  box-shadow:0 18px 48px #16477f18;
+}
+
+body.light-mode .container:before{
+  background:linear-gradient(
+    90deg,transparent,#258bff,#d1f1ff,#54b7ff,transparent
+  );
+}
+
+body.light-mode h1,
+body.light-mode h2,
+body.light-mode h3,
+body.light-mode #question{
+  color:#163f69;
+  text-shadow:none;
+}
+
+body.light-mode .panel,
+body.light-mode .item{
+  background:linear-gradient(145deg,#ffffff,#f0f8ff);
+  border-color:#c8e3f8;
+  box-shadow:0 8px 24px #16477f0a;
+}
+
+body.light-mode .menu-card{
+  background:linear-gradient(145deg,#ffffff,#eaf5ff);
+  border-color:#b9ddf7;
+  color:#16436c;
+}
+
+body.light-mode .menu-card small,
+body.light-mode .preview{
+  color:#66829d;
+}
+
+body.light-mode .main{
+  background:linear-gradient(135deg,#258bff,#70c9ff);
+  color:#fff;
+  border-color:#8bd5ff;
+}
+
+body.light-mode .secondary,
+body.light-mode .tab,
+body.light-mode .home-button,
+body.light-mode .theme-toggle{
+  background:#e4f3ff;
+  color:#17558a;
+  border-color:#b9dcf5;
+}
+
+body.light-mode .tab.active{
+  background:linear-gradient(135deg,#258bff,#70c9ff);
+  color:#fff;
+}
+
+body.light-mode input,
+body.light-mode textarea,
+body.light-mode select,
+body.light-mode .set-dropdown-button,
+body.light-mode .set-dropdown-list{
+  background:#ffffff;
+  color:#163653;
+  border-color:#b9d9f2;
+}
+
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder{
+  color:#8aa3ba;
+}
+
+body.light-mode .set-option{
+  background:#f5faff;
+  color:#163f69;
+  border-color:#d8eafa;
+}
+
+body.light-mode .set-option.selected{
+  background:linear-gradient(90deg,#258bff,#54b7ff);
+  color:#fff;
+}
+
+body.light-mode details{
+  background:#f5faff;
+  border-color:#c5e2f8;
+}
+
+body.light-mode details>summary{
+  color:#17558a;
+}
+
+body.light-mode .info span,
+body.light-mode .pill,
+body.light-mode #timerSettings{
+  background:#eaf5ff;
+  border-color:#c5e2f8;
+  color:#17558a;
+}
+
+body.light-mode .danger{
+  background:#fff0f3;
+  color:#c5284a;
+  border-color:#f2b7c4;
+}
+
+body.light-mode .pick{
+  border-color:#d8eafa;
+}
+
+body.light-mode .pick span,
+body.light-mode label{
+  color:#234f75;
+}
+
+body.light-mode .sound-btn.on{
+  background:#258bff;
+  color:#fff;
+}
+
+body.light-mode .sound-btn.off{
+  background:#fff;
+  color:#66829d;
+  border-color:#b9d9f2;
+}
+
+body.light-mode #timerValue{
+  color:#258bff;
+  text-shadow:none;
+}
+
+body.light-mode hr{
+  border-color:#c5e2f8;
+}
+
+@media(max-width:520px){
+  .theme-toggle,
+  .home-button{
+    width:36px;
+    height:36px;
+    top:2px;
+    font-size:17px;
+  }
+
+  .app-topbar h1{
+    font-size:clamp(20px,5vw,30px);
+    letter-spacing:.04em;
+  }
+}
+.screen-edge-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  overflow: hidden;
+  border: 2px solid rgba(22, 139, 255, 0.45);
+  box-sizing: border-box;
+}
+
+/* Ilaw na tumatakbo sa mismong gilid ng screen */
+.screen-edge-glow::before {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: #ffffff;
+
+  /* Maliwanag na asul na ilaw */
+  box-shadow:
+    0 0 5px 2px #ffffff,
+    0 0 10px 4px #65d8ff,
+    0 0 20px 7px #168bff,
+    0 0 34px 10px rgba(0, 123, 255, 0.65);
+
+  offset-path: inset(0 round 0);
+  offset-distance: 0%;
+
+  /* 15 seconds = 3x na mas mabagal mula sa 5 seconds */
+  animation: edge-light-run 50s linear infinite;
+}
+
+/* Asul na trail na kusang nawawala */
+.screen-edge-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: transparent;
+  animation: edge-trail-fade 1.8s ease-out infinite;
+}
+
+@keyframes edge-light-run {
+  from {
+    offset-distance: 0%;
+  }
+  to {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes edge-trail-fade {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.15;
+  }
+}
+
+body.light-mode .screen-edge-glow {
+  border-color: rgba(0, 125, 255, 0.55);
+}
+
+.exit-modal{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:#020b18bb;
+  backdrop-filter:blur(7px);
+}
+
+.exit-modal.hidden{
+  display:none!important;
+}
+
+.exit-card{
+  width:100%;
+  max-width:340px;
+  padding:22px;
+  border:1px solid #367db7;
+  border-radius:18px;
+  background:linear-gradient(145deg,#10294b,#07162d);
+  color:#edf7ff;
+  box-shadow:0 18px 60px #0008;
+}
+
+.exit-card h2{
+  color:#d8efff;
+}
+
+.exit-card p{
+  color:#b9d9f6;
+  line-height:1.6;
+}
+
+.exit-card .row button{
+  flex:1;
+}
+
+body.light-mode .exit-card{
+  background:linear-gradient(145deg,#ffffff,#eaf5ff);
+  border-color:#b9dcf5;
+  color:#163653;
+}
+
+body.light-mode .exit-card h2{
+  color:#163f69;
+}
+
+body.light-mode .exit-card p{
+  color:#66829d;
+}
+
+/* CUSTOM APP DIALOG */
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: #020b18bb;
+  backdrop-filter: blur(7px);
+}
+
+.app-dialog-overlay.hidden {
+  display: none !important;
+}
+
+.app-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 21px;
+  border: 1px solid #367db7;
+  border-radius: 17px;
+  background: linear-gradient(145deg, #10294b, #07162d);
+  color: #edf7ff;
+  box-shadow: 0 18px 60px #0008;
+}
+
+.app-dialog-title {
+  margin: 0 0 12px;
+  font-size: 17px;
+  color: #d8efff;
+}
+
+.app-dialog-message {
+  margin: 0 0 17px;
+  font-size: 14px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: #b9d9f6;
+}
+
+.app-dialog-input {
+  width: 100%;
+  margin: 0 0 17px;
+}
+
+.app-dialog-actions {
+  display: flex;
+  gap: 9px;
+}
+
+.app-dialog-actions button {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-dialog-cancel {
+  background: #12294a;
+  color: #c7e5ff;
+  border-color: #24486f;
+}
+
+.app-dialog-ok {
+  background: linear-gradient(135deg, #1678ef, #24a6ff);
+  color: #fff;
+  border-color: #67c4ff;
+}
+
+body.light-mode .app-dialog {
+  background: linear-gradient(145deg, #ffffff, #eaf5ff);
+  border-color: #b9dcf5;
+  color: #163653;
+}
+
+body.light-mode .app-dialog-title {
+  color: #163f69;
+}
+
+body.light-mode .app-dialog-message {
+  color: #426b8d;
+}
+
+body.light-mode .app-dialog-input {
+  background: #fff;
+  color: #163653;
+  border-color: #b9d9f2;
+}
+
+body.light-mode .app-dialog-cancel {
+  background: #e4f3ff;
+  color: #17558a;
+  border-color: #b9dcf5;
+}
+
+body.light-mode .app-dialog-ok {
+  background: linear-gradient(135deg, #258bff, #70c9ff);
+  color: #fff;
+}
+  
 </style>
 </head>
 <body>
+
+<div class="screen-edge-glow" aria-hidden="true"></div>
+  
 <div class="container">
 <div class="app-topbar">
-<button id="homeButton" class="home-button hidden" onclick="showTab('home')" aria-label="Go to Home" title="Home">⌂</button>
+<button id="themeToggle" class="theme-toggle"
+  type="button" onclick="toggleTheme()"
+  aria-label="Toggle light and dark mode"
+  title="Switch theme">
+  ☀️
+</button>
+<button id="homeButton" class="home-button hidden" onclick="navigateTo('home')" aria-label="Go to Home" title="Home">⌂</button>
 <h1>🧠 QUIZ LꝎP</h1>
 </div>
 <p class="subtitle">Smart Recall · Practice · Repeat · Master</p>
@@ -123,10 +546,10 @@ hr{border:0;border-top:1px solid var(--line)}
 <h2>Welcome to Quiz L∞p</h2>
 <p class="small">Choose where you want to go. Your questions and progress are saved automatically on this device.</p>
 <div class="home-grid">
-<button class="menu-card" onclick="showTab('play')"><span class="menu-icon">🎮</span><strong>Quiz</strong><small>Practice and test your recall</small></button>
-<button class="menu-card" onclick="showTab('history')"><span class="menu-icon">📜</span><strong>Saved History</strong><small>Review past quiz results</small></button>
-<button class="menu-card" onclick="showTab('questions')"><span class="menu-icon">❓</span><strong>Questions</strong><small>Add and manage questions</small></button>
-<button class="menu-card" onclick="showTab('sets')"><span class="menu-icon">🗂️</span><strong>Question Sets</strong><small>Organize questions into sets</small></button>
+<button class="menu-card" onclick="navigateTo('play')"><span class="menu-icon">🎮</span><strong>Quiz</strong><small>Practice and test your recall</small></button>
+<button class="menu-card" onclick="navigateTo('history')"><span class="menu-icon">📜</span><strong>Saved History</strong><small>Review past quiz results</small></button>
+<button class="menu-card" onclick="navigateTo('questions')"><span class="menu-icon">❓</span><strong>Questions</strong><small>Add and manage questions</small></button>
+<button class="menu-card" onclick="navigateTo('sets')"><span class="menu-icon">🗂️</span><strong>Question Sets</strong><small>Organize questions into sets</small></button>
 <button class="menu-card" onclick="showTab('backup')"><span class="menu-icon">🔐</span><strong>Backup & Settings</strong><small>Download, restore, or manage data</small></button>
 </div>
 </div>
@@ -281,6 +704,45 @@ What is the next question?
 </div>
 
 <script>
+const THEME_KEY = "ramble_quiz_theme_v1";
+
+function applyTheme(theme){
+  const light = theme === "light";
+
+  document.body.classList.toggle("light-mode", light);
+
+  const button = document.getElementById("themeToggle");
+  if(button){
+    button.textContent = light ? "🌙" : "☀️";
+    button.title = light ? "Switch to dark mode" : "Switch to light mode";
+    button.setAttribute("aria-pressed", String(light));
+  }
+
+  try{
+    localStorage.setItem(THEME_KEY, light ? "light" : "dark");
+  }catch(error){
+    console.warn("Unable to save theme:", error);
+  }
+
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta){
+    meta.content = light ? "#16477f" : "#07152f";
+  }
+}
+
+function toggleTheme(){
+  const next = document.body.classList.contains("light-mode")
+    ? "dark"
+    : "light";
+
+  applyTheme(next);
+}
+
+try{
+  applyTheme(localStorage.getItem(THEME_KEY) || "dark");
+}catch(error){
+  applyTheme("dark");
+}
 const STORAGE_KEY = "ramble_quiz_custom_sets_v3";
 const OLD_KEY_V2 = "rambleMemoryQuiz_v2";
 const OLD_KEY_V1 = "rambleMemoryQuiz_v1";
@@ -477,7 +939,18 @@ function renderQuizHistory(){
     const deleteButton=document.createElement("button");deleteButton.className="danger";deleteButton.textContent="🗑️ Delete Record";deleteButton.style.width="100%";deleteButton.style.marginTop="10px";deleteButton.onclick=()=>deleteQuizRecord(record.id);card.appendChild(deleteButton);list.appendChild(card);
   });
 }
-function deleteQuizRecord(id){if(!confirm("Delete this saved quiz record?"))return;const previousHistory=quizHistory;quizHistory=quizHistory.filter(record=>record.id!==id);if(persistQuizHistory())renderQuizHistory();else quizHistory=previousHistory;}
+async function deleteQuizRecord(id) {
+  if (!await appConfirm("Delete this saved quiz record?")) return;
+
+  const previousHistory = quizHistory;
+  quizHistory = quizHistory.filter(record => record.id !== id);
+
+  if (persistQuizHistory()) {
+    renderQuizHistory();
+  } else {
+    quizHistory = previousHistory;
+  }
+}
 function restartGame(mode="same"){
   stopQuestionTimer();
   if(mode==="next") round=Math.max(1,Number(round)||1)+1;
@@ -493,21 +966,88 @@ function toggleRamble(){
     else{startQuestionTimer(false);document.getElementById("feedback").textContent="▶ Quiz resumed.";}}
   else{stopQuestionTimer();document.getElementById("feedback").textContent="⏸ Quiz paused.";}saveQuizSession();
 }
+const screenHistory = ["home"];
+let internalNavigation = false;
+let exitDialogOpen = false;
+
+function navigateTo(tab){
+  if(!tab || tab === activeTab) return;
+
+  screenHistory.push(tab);
+  internalNavigation = true;
+
+  history.pushState(
+    { quizLoopScreen: tab },
+    "",
+    "#"+tab
+  );
+
+  internalNavigation = false;
+  showTab(tab);
+}
+
 function showTab(tab){
-  activeTab=tab;
-  const screens=["home","play","history","questions","sets","backup"];
-  screens.forEach(name=>{const panel=document.getElementById(name+"Panel");if(panel)panel.classList.toggle("hidden",name!==tab);});
-  document.getElementById("homeButton").classList.toggle("hidden",tab==="home");
-  if(tab!=="play"){
+  const screens = [
+    "home","play","history","questions","sets","backup"
+  ];
+
+  if(!screens.includes(tab)) tab = "home";
+
+  activeTab = tab;
+
+  screens.forEach(name=>{
+    const panel = document.getElementById(name+"Panel");
+    if(panel) panel.classList.toggle("hidden",name !== tab);
+  });
+
+  document.getElementById("homeButton")
+    .classList.toggle("hidden",tab === "home");
+
+  if(tab !== "play"){
     stopQuestionTimer();
-    document.getElementById("timerStatus").textContent="⏸ Timer paused — you are outside the Quiz screen.";
-  }else if(!answered&&ramble&&order.length>0){startQuestionTimer(false);}
-  if(tab==="questions")renderQuestions();
-  if(tab==="sets"){renderSetPicker();renderSets();}
-  if(tab==="history")renderQuizHistory();
-  if(tab==="play")renderSetSelect();
+    document.getElementById("timerStatus").textContent =
+      "⏸ Timer paused — you are outside the Quiz screen.";
+  }else if(!answered && ramble && order.length > 0){
+    startQuestionTimer(false);
+  }
+
+  if(tab === "questions") renderQuestions();
+
+  if(tab === "sets"){
+    renderSetPicker();
+    renderSets();
+  }
+
+  if(tab === "history") renderQuizHistory();
+  if(tab === "play") renderSetSelect();
+
   window.scrollTo({top:0,behavior:"smooth"});
 }
+
+function goBackInApp(){
+  if(screenHistory.length > 1){
+    screenHistory.pop();
+    const previous = screenHistory[screenHistory.length-1];
+
+    internalNavigation = true;
+    history.replaceState(
+      {quizLoopScreen:previous},
+      "",
+      "#"+previous
+    );
+    internalNavigation = false;
+
+    showTab(previous);
+    return;
+  }
+
+  showExitDialog();
+}
+
+window.addEventListener("popstate",function(){
+  if(internalNavigation) return;
+  goBackInApp();
+});
 
 function stripLeadingItemNumber(text){return String(text).replace(/^\s*\d+\s*[.)]\s*/,"").trim();}
 function parseBulkAnswers(text){return String(text).replace(/\r/g,"").split("\n").map(stripLeadingItemNumber).filter(line=>line&&!/^---$/.test(line));}
@@ -572,7 +1112,26 @@ function saveQuestion(){
 }
 function cancelQuestionEdit(){editingQuestionId=null;document.getElementById("questionInput").value="";document.getElementById("answersInput").value="";document.getElementById("saveQuestionBtn").textContent="➕ Add Question";document.getElementById("cancelQuestionBtn").classList.add("hidden");}
 function editQuestion(id){const q=questions.find(q=>q.id===id);if(!q)return;editingQuestionId=id;document.getElementById("questionInput").value=q.question;document.getElementById("answersInput").value=q.answers.join("\n---\n");document.getElementById("saveQuestionBtn").textContent="💾 Save Changes";document.getElementById("cancelQuestionBtn").classList.remove("hidden");document.getElementById("questionEditorDetails").open=true;document.getElementById("questionInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
-function deleteQuestion(id){const q=questions.find(q=>q.id===id);if(!q||!confirm("Delete this question? It will also be removed from every set that contains it."))return;questions=questions.filter(q=>q.id!==id);sets.forEach(s=>s.questionIds=s.questionIds.filter(qid=>qid!==id));persist();cancelQuestionEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();}
+async function deleteQuestion(id) {
+  const q = questions.find(q => q.id === id);
+
+  if (!q || !await appConfirm(
+    "Delete this question? It will also be removed from every set that contains it."
+  )) return;
+
+  questions = questions.filter(q => q.id !== id);
+  sets.forEach(s => {
+    s.questionIds = s.questionIds.filter(qid => qid !== id);
+  });
+
+  persist();
+  cancelQuestionEdit();
+  renderQuestions();
+  renderSetPicker();
+  renderSets();
+  renderSetSelect();
+  restartGame();
+}
 function renderQuestions(){
   const list=document.getElementById("questionList");list.replaceChildren();const query=normalize(document.getElementById("questionSearch").value);let count=0;
   questions.forEach((q,index)=>{if(query&&!normalize(q.question).includes(query))return;count++;const card=document.createElement("div");card.className="item";const badge=document.createElement("span");badge.className="pill";badge.textContent="Question "+(index+1)+" • "+q.answers.length+" answers";card.appendChild(badge);
@@ -597,7 +1156,25 @@ function saveSet(){
 function cancelSetEdit(){editingSetId=null;document.getElementById("setNameInput").value="";document.getElementById("saveSetBtn").textContent="➕ Create Set";document.getElementById("cancelSetBtn").classList.add("hidden");renderSetPicker();}
 function editSet(id){const set=sets.find(s=>s.id===id);if(!set)return;editingSetId=id;document.getElementById("setNameInput").value=set.name;document.getElementById("saveSetBtn").textContent="💾 Save Set";document.getElementById("cancelSetBtn").classList.remove("hidden");renderSetPicker();document.getElementById("setEditorDetails").open=true;document.getElementById("setNameInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
 function playSet(id){selectedSetId=id;renderSetSelect();showTab("play");restartGame("reset");}
-function deleteSet(id){const set=sets.find(s=>s.id===id);if(!set||!confirm('Delete the set "'+set.name+'"? The questions will remain in the Question Bank.'))return;sets=sets.filter(s=>s.id!==id);if(selectedSetId===id)selectedSetId="all";if(editingSetId===id)cancelSetEdit();persist();renderSets();renderSetPicker();renderSetSelect();restartGame();}
+async function deleteSet(id) {
+  const set = sets.find(s => s.id === id);
+
+  if (!set || !await appConfirm(
+    'Delete the set "' + set.name +
+    '"? The questions will remain in the Question Bank.'
+  )) return;
+
+  sets = sets.filter(s => s.id !== id);
+
+  if (selectedSetId === id) selectedSetId = "all";
+  if (editingSetId === id) cancelSetEdit();
+
+  persist();
+  renderSets();
+  renderSetPicker();
+  renderSetSelect();
+  restartGame();
+}
 function renderSets(){
   const list=document.getElementById("setList");list.replaceChildren();if(sets.length===0){const p=document.createElement("p");p.className="small";p.textContent="You have not created any custom sets yet. Create one above.";list.appendChild(p);return;}
   sets.forEach(set=>{const card=document.createElement("div");card.className="item";const count=set.questionIds.filter(id=>questions.some(q=>q.id===id)).length;const badge=document.createElement("span");badge.className="pill";badge.textContent=count+" questions";card.appendChild(badge);const title=document.createElement("h3");title.textContent=set.name;card.appendChild(title);
@@ -610,41 +1187,545 @@ function base64ToBytes(text){const binary=atob(text),bytes=new Uint8Array(binary
 async function makeBackupKey(password,salt){const material=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt:salt,iterations:250000,hash:"SHA-256"},material,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
 async function encryptBackupText(text,password){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await makeBackupKey(password,salt),encrypted=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},key,new TextEncoder().encode(text));return{format:"ramble-quiz-encrypted-backup-v1",salt:bytesToBase64(salt),iv:bytesToBase64(iv),data:bytesToBase64(new Uint8Array(encrypted))};}
 async function decryptBackupText(backup,password){const salt=base64ToBytes(backup.salt),iv=base64ToBytes(backup.iv),encrypted=base64ToBytes(backup.data),key=await makeBackupKey(password,salt),decrypted=await crypto.subtle.decrypt({name:"AES-GCM",iv:iv},key,encrypted);return new TextDecoder().decode(decrypted);}
-async function exportBackup(){
-  try{
-    if(!window.crypto||!crypto.subtle){alert("Encryption is not available in this environment. Please open the app in an HTTPS browser.");return;}
-    const password=prompt("Create a password for your encrypted backup. Use at least 8 characters:");if(password===null)return;if(password.length<8){alert("Please use a password with at least 8 characters.");return;}
-    const confirmPassword=prompt("Enter your password again to confirm:");if(confirmPassword===null)return;if(password!==confirmPassword){alert("The passwords do not match. No backup was created.");return;}
-    const data={version:3,exportedAt:new Date().toISOString(),questions:questions,sets:sets,history:quizHistory,timerSettings:{seconds:saveTimerSettings(),enabled:document.getElementById("timerEnabled").checked,organ:document.getElementById("organEnabled").checked,violin:document.getElementById("violinEnabled").checked}};
-    const encrypted=await encryptBackupText(JSON.stringify(data),password),blob=new Blob([JSON.stringify(encrypted)],{type:"application/octet-stream"}),fileName="ramble-quiz-encrypted-backup-"+new Date().toISOString().slice(0,10)+".rqbackup",file=new File([blob],fileName,{type:"application/octet-stream"});
-    if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Encrypted Ramble Quiz Backup"});return;}
-    const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=fileName;link.textContent="Download Encrypted Backup";link.style.display="block";link.style.padding="16px";link.style.margin="12px 0";link.style.background="linear-gradient(135deg,#1678ef,#24a6ff)";link.style.color="white";link.style.textAlign="center";link.style.borderRadius="9px";
-    const oldLink=document.getElementById("backupDownloadLink");if(oldLink)oldLink.remove();link.id="backupDownloadLink";link.onclick=()=>setTimeout(()=>URL.revokeObjectURL(url),60000);document.querySelector("#backupPanel .panel").appendChild(link);alert("Your encrypted backup is ready. Tap the new download link.");
-  }catch(error){if(error.name==="AbortError")return;console.error("Encrypted backup error:",error);alert("Failed to create the backup. "+error.message);}
+
+async function exportBackup() {
+  try {
+    if (!window.crypto || !crypto.subtle) {
+      await appAlert(
+        "Encryption is not available in this environment. Please open the app in an HTTPS browser."
+      );
+      return;
+    }
+
+    // Create backup password
+    const password = await appPrompt(
+      "Create a password for your encrypted backup. Use at least 8 characters:",
+      {
+        title: "Create Backup Password",
+        inputType: "password",
+        autocomplete: "new-password",
+        placeholder: "At least 8 characters"
+      }
+    );
+
+    if (password === null) return;
+
+    if (password.length < 8) {
+      await appAlert(
+        "Please use a password with at least 8 characters."
+      );
+      return;
+    }
+
+    // Confirm backup password
+    const confirmPassword = await appPrompt(
+      "Enter your password again to confirm:",
+      {
+        title: "Confirm Password",
+        inputType: "password",
+        autocomplete: "new-password",
+        placeholder: "Re-enter password"
+      }
+    );
+
+    if (confirmPassword === null) return;
+
+    if (password !== confirmPassword) {
+      await appAlert(
+        "The passwords do not match. No backup was created."
+      );
+      return;
+    }
+
+    // Collect quiz data
+    const data = {
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      questions: questions,
+      sets: sets,
+      history: quizHistory,
+      timerSettings: {
+        seconds: saveTimerSettings(),
+        enabled: document.getElementById("timerEnabled").checked,
+        organ: document.getElementById("organEnabled").checked,
+        violin: document.getElementById("violinEnabled").checked
+      }
+    };
+
+    // Encrypt backup data
+    const encrypted = await encryptBackupText(
+      JSON.stringify(data),
+      password
+    );
+
+    const blob = new Blob(
+      [JSON.stringify(encrypted)],
+      { type: "application/octet-stream" }
+    );
+
+    const fileName =
+      "ramble-quiz-encrypted-backup-" +
+      new Date().toISOString().slice(0, 10) +
+      ".rqbackup";
+
+    const file = new File(
+      [blob],
+      fileName,
+      { type: "application/octet-stream" }
+    );
+
+    // Share the encrypted backup when supported
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] })
+    ) {
+      await navigator.share({
+        files: [file],
+        title: "Encrypted Ramble Quiz Backup"
+      });
+      return;
+    }
+
+    // Otherwise, create a download link
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    link.textContent = "Download Encrypted Backup";
+
+    link.style.display = "block";
+    link.style.padding = "16px";
+    link.style.margin = "12px 0";
+    link.style.background =
+      "linear-gradient(135deg, #1678ef, #24a6ff)";
+    link.style.color = "white";
+    link.style.textAlign = "center";
+    link.style.borderRadius = "9px";
+
+    const oldLink = document.getElementById("backupDownloadLink");
+
+    if (oldLink) {
+      oldLink.remove();
+    }
+
+    link.id = "backupDownloadLink";
+
+    link.onclick = () => {
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    };
+
+    document
+      .querySelector("#backupPanel .panel")
+      .appendChild(link);
+
+    await appAlert(
+      "Your encrypted backup is ready. Tap the new download link."
+    );
+
+  } catch (error) {
+    if (error.name === "AbortError") return;
+
+    console.error("Encrypted backup error:", error);
+
+    await appAlert(
+      "Failed to create the backup. " +
+      (error.message || "An unexpected error occurred.")
+    );
+  }
 }
+
 function showSelectedBackup(){const file=document.getElementById("importFile").files[0];document.getElementById("selectedBackupName").textContent=file?"Selected file: "+file.name:"No file selected.";}
-function importBackup(){
-  const file=document.getElementById("importFile").files[0];if(!file){alert("Please tap CHOOSE BACKUP FILE first.");return;}const reader=new FileReader();reader.onerror=()=>alert("Unable to read the file. Please choose another backup file.");
-  reader.onload=async function(){try{
-    const rawText=String(reader.result||""),parsed=JSON.parse(rawText);let data;
-    if(parsed&&parsed.format==="ramble-quiz-encrypted-backup-v1"){const password=prompt("Enter your backup password:");if(password===null)return;try{data=JSON.parse(await decryptBackupText(parsed,password));}catch(error){alert("Unable to open the backup. The password may be incorrect or the file may be corrupted.");return;}}
-    else{if(!confirm("This is an unencrypted JSON backup. Do you want to restore it anyway?"))return;data=parsed;}
-    if(!data||!Array.isArray(data.questions))throw new Error("Invalid questions");
-    const importedQuestions=data.questions.map(q=>{if(!q||typeof q.question!=="string"||!Array.isArray(q.answers)||q.answers.length===0||!q.answers.every(a=>typeof a==="string"&&a.trim()))throw new Error("Invalid question");return{id:typeof q.id==="string"&&q.id?q.id:makeId("q"),question:q.question,answers:q.answers};});
-    const importedSets=Array.isArray(data.sets)?data.sets.map(s=>{if(!s||typeof s.name!=="string"||!Array.isArray(s.questionIds))throw new Error("Invalid set");return{id:typeof s.id==="string"&&s.id?s.id:makeId("set"),name:s.name,questionIds:s.questionIds.filter(id=>typeof id==="string"&&importedQuestions.some(q=>q.id===id))};}):[];
-    const importedHistory=Array.isArray(data.history)?data.history:[];if(!confirm("This will replace your current questions and sets. Make sure you have a backup of your current data. Continue?"))return;
-    const previousQuestions=questions,previousSets=sets,previousHistory=quizHistory;questions=importedQuestions;sets=importedSets;quizHistory=importedHistory;selectedSetId="all";
-    try{localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));localStorage.setItem(HISTORY_KEY,JSON.stringify(quizHistory));}catch(saveError){questions=previousQuestions;sets=previousSets;quizHistory=previousHistory;alert("Unable to save the restored data. Browser storage may be full. No changes were made.");return;}
-    if(data.timerSettings){const timer=data.timerSettings;document.getElementById("timerSeconds").value=Math.min(3600,Math.max(1,Number(timer.seconds)||30));document.getElementById("timerEnabled").checked=timer.enabled!==false;document.getElementById("organEnabled").checked=timer.organ!==false;document.getElementById("violinEnabled").checked=timer.violin===true;saveTimerSettings();updateSoundButtons();}
-    cancelQuestionEdit();cancelSetEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();renderQuizHistory();restartGame();document.getElementById("importFile").value="";showSelectedBackup();alert("✅ Backup restored successfully!\nQuestions: "+questions.length+"\nCustom sets: "+sets.length);
-  }catch(error){console.error("Restore error:",error);alert("The backup JSON file is invalid or unreadable. Please choose a backup created by Quiz Loop.");}};
+
+async function importBackup() {
+  const file = document.getElementById("importFile").files[0];
+
+  if (!file) {
+    await appAlert("Please tap CHOOSE BACKUP FILE first.");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onerror = async () => {
+    await appAlert(
+      "Unable to read the file. Please choose another backup file."
+    );
+  };
+
+  reader.onload = async function () {
+    try {
+      const rawText = String(reader.result || "");
+      const parsed = JSON.parse(rawText);
+      let data;
+
+      // Handle encrypted backup
+      if (
+        parsed &&
+        parsed.format === "ramble-quiz-encrypted-backup-v1"
+      ) {
+        const password = await appPrompt(
+          "Enter your backup password:",
+          {
+            title: "Unlock Backup",
+            inputType: "password",
+            autocomplete: "current-password",
+            placeholder: "Enter backup password"
+          }
+        );
+
+        if (password === null) return;
+
+        try {
+          data = JSON.parse(
+            await decryptBackupText(parsed, password)
+          );
+        } catch (error) {
+          await appAlert(
+            "Unable to open the backup. The password may be incorrect or the file may be corrupted."
+          );
+          return;
+        }
+      } else {
+        // Handle unencrypted JSON backup
+        const confirmed = await appConfirm(
+          "This is an unencrypted JSON backup. Do you want to restore it anyway?",
+          {
+            title: "Unencrypted Backup",
+            confirmText: "Restore Anyway",
+            cancelText: "Cancel"
+          }
+        );
+
+        if (!confirmed) return;
+
+        data = parsed;
+      }
+
+      // Validate backup data
+      if (!data || !Array.isArray(data.questions)) {
+        throw new Error("Invalid questions");
+      }
+
+      const importedQuestions = data.questions.map(q => {
+        if (
+          !q ||
+          typeof q.question !== "string" ||
+          !Array.isArray(q.answers) ||
+          q.answers.length === 0 ||
+          !q.answers.every(
+            a => typeof a === "string" && a.trim()
+          )
+        ) {
+          throw new Error("Invalid question");
+        }
+
+        return {
+          id: typeof q.id === "string" && q.id
+            ? q.id
+            : makeId("q"),
+          question: q.question,
+          answers: q.answers
+        };
+      });
+
+      const importedSets = Array.isArray(data.sets)
+        ? data.sets.map(s => {
+            if (
+              !s ||
+              typeof s.name !== "string" ||
+              !Array.isArray(s.questionIds)
+            ) {
+              throw new Error("Invalid set");
+            }
+
+            return {
+              id: typeof s.id === "string" && s.id
+                ? s.id
+                : makeId("set"),
+              name: s.name,
+              questionIds: s.questionIds.filter(
+                id =>
+                  typeof id === "string" &&
+                  importedQuestions.some(q => q.id === id)
+              )
+            };
+          })
+        : [];
+
+      const importedHistory = Array.isArray(data.history)
+        ? data.history
+        : [];
+
+      // Ask before replacing existing data
+      const confirmed = await appConfirm(
+        "This will replace your current questions and sets. Make sure you have a backup of your current data. Continue?",
+        {
+          title: "Replace Current Data",
+          confirmText: "Restore Backup",
+          cancelText: "Cancel"
+        }
+      );
+
+      if (!confirmed) return;
+
+      // Save previous data in case storage fails
+      const previousQuestions = questions;
+      const previousSets = sets;
+      const previousHistory = quizHistory;
+
+      questions = importedQuestions;
+      sets = importedSets;
+      quizHistory = importedHistory;
+      selectedSetId = "all";
+
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ questions, sets })
+        );
+
+        localStorage.setItem(
+          HISTORY_KEY,
+          JSON.stringify(quizHistory)
+        );
+      } catch (saveError) {
+        questions = previousQuestions;
+        sets = previousSets;
+        quizHistory = previousHistory;
+
+        await appAlert(
+          "Unable to save the restored data. Browser storage may be full. No changes were made."
+        );
+
+        return;
+      }
+
+      // Restore timer and sound settings, if included
+      if (data.timerSettings) {
+        const timer = data.timerSettings;
+
+        document.getElementById("timerSeconds").value =
+          Math.min(
+            3600,
+            Math.max(1, Number(timer.seconds) || 30)
+          );
+
+        document.getElementById("timerEnabled").checked =
+          timer.enabled !== false;
+
+        document.getElementById("organEnabled").checked =
+          timer.organ !== false;
+
+        document.getElementById("violinEnabled").checked =
+          timer.violin === true;
+
+        saveTimerSettings();
+        updateSoundButtons();
+      }
+
+      // Refresh the app
+      cancelQuestionEdit();
+      cancelSetEdit();
+      renderQuestions();
+      renderSetPicker();
+      renderSets();
+      renderSetSelect();
+      renderQuizHistory();
+      restartGame();
+
+      document.getElementById("importFile").value = "";
+
+      showSelectedBackup();
+
+      await appAlert(
+        "✅ Backup restored successfully!\n" +
+        "Questions: " + questions.length + "\n" +
+        "Custom sets: " + sets.length
+      );
+
+    } catch (error) {
+      console.error("Restore error:", error);
+
+      await appAlert(
+        "The backup JSON file is invalid or unreadable. Please choose a backup created by Quiz Loop."
+      );
+    }
+  };
+
   reader.readAsText(file);
 }
-function deleteEverything(){if(!confirm("Are you sure you want to delete all questions and sets? Download a backup first if needed."))return;questions=[];sets=[];selectedSetId="all";persist();cancelQuestionEdit();cancelSetEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();}
-document.getElementById("answer").addEventListener("keydown",function(event){if(event.key==="Enter"&&(event.ctrlKey||event.metaKey)){event.preventDefault();if(answered)nextQuestion();else checkAnswer();}});
-renderSetSelect();renderQuestions();renderSetPicker();renderSets();renderQuizHistory();updateBulkSaveButton();
-if(!restoreQuizSession())restartGame();
+
+async function deleteEverything() {
+  if (!await appConfirm(
+    "Are you sure you want to delete all questions and sets? Download a backup first if needed."
+  )) return;
+
+  questions = [];
+  sets = [];
+  selectedSetId = "all";
+
+  persist();
+  cancelQuestionEdit();
+  cancelSetEdit();
+  renderQuestions();
+  renderSetPicker();
+  renderSets();
+  renderSetSelect();
+  restartGame();
+}
 showTab("home");
+
+function showExitDialog(){
+  if(exitDialogOpen) return;
+
+  exitDialogOpen = true;
+  document.getElementById("exitModal").classList.remove("hidden");
+}
+
+function closeExitDialog(){
+  exitDialogOpen = false;
+  document.getElementById("exitModal").classList.add("hidden");
+}
+
+function confirmExit(){
+  closeExitDialog();
+  
+  window.location.hash = "home";
+  showTab("home");
+}
 </script>
+<div id="appDialogOverlay" class="app-dialog-overlay hidden"
+     role="dialog" aria-modal="true"
+     aria-labelledby="appDialogTitle">
+  <div class="app-dialog">
+    <h2 id="appDialogTitle" class="app-dialog-title">Message</h2>
+    <p id="appDialogMessage" class="app-dialog-message"></p>
+
+    <input id="appDialogInput"
+           class="app-dialog-input hidden"
+           type="text"
+           autocomplete="off">
+
+    <div class="app-dialog-actions">
+      <button id="appDialogCancel"
+              type="button"
+              class="app-dialog-cancel hidden">Cancel</button>
+      <button id="appDialogOK"
+              type="button"
+              class="app-dialog-ok">OK</button>
+    </div>
+  </div>
+</div>
+<script>
+function appDialog(type, message, options = {}) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById("appDialogOverlay");
+    const title = document.getElementById("appDialogTitle");
+    const text = document.getElementById("appDialogMessage");
+    const input = document.getElementById("appDialogInput");
+    const ok = document.getElementById("appDialogOK");
+    const cancel = document.getElementById("appDialogCancel");
+
+    title.textContent = options.title ||
+      (type === "confirm" ? "Confirm" :
+       type === "prompt" ? "Enter Information" : "Message");
+
+    text.textContent = message;
+    input.classList.toggle("hidden", type !== "prompt");
+    cancel.classList.toggle("hidden", type === "alert");
+
+    ok.textContent = options.okText ||
+      (type === "confirm" ? "Yes" :
+       type === "prompt" ? "Continue" : "OK");
+
+    cancel.textContent = options.cancelText || "Cancel";
+    input.type = options.inputType || "text";
+    input.placeholder = options.placeholder || "";
+    input.value = options.defaultValue || "";
+    input.autocomplete = options.autocomplete || "off";
+
+    overlay.classList.remove("hidden");
+
+    function finish(value) {
+      overlay.classList.add("hidden");
+      ok.removeEventListener("click", onOK);
+      cancel.removeEventListener("click", onCancel);
+      overlay.removeEventListener("click", onOutside);
+      document.removeEventListener("keydown", onKey);
+      resolve(value);
+    }
+
+    function onOK() {
+      finish(type === "prompt" ? input.value :
+             type === "confirm" ? true : undefined);
+    }
+
+    function onCancel() {
+      finish(type === "prompt" ? null : false);
+    }
+
+    function onOutside(event) {
+      if (event.target === overlay) onCancel();
+    }
+
+    function onKey(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCancel();
+      } else if (event.key === "Enter" && type !== "alert") {
+        event.preventDefault();
+        onOK();
+      } else if (event.key === "Enter" && type === "alert") {
+        event.preventDefault();
+        onOK();
+      }
+    }
+
+    ok.addEventListener("click", onOK);
+    cancel.addEventListener("click", onCancel);
+    overlay.addEventListener("click", onOutside);
+    document.addEventListener("keydown", onKey);
+
+    requestAnimationFrame(() => {
+      if (type === "prompt") input.focus();
+      else ok.focus();
+    });
+  });
+}
+
+function appAlert(message, options = {}) {
+  return appDialog("alert", message, options);
+}
+
+function appConfirm(message, options = {}) {
+  return appDialog("confirm", message, options);
+}
+
+function appPrompt(message, options = {}) {
+  return appDialog("prompt", message, options);
+}
+
+window.alert = function(message) {
+  void appAlert(String(message));
+};
+</script>
+<div id="exitModal" class="exit-modal hidden"
+     role="dialog" aria-modal="true"
+     aria-labelledby="exitTitle">
+  <div class="exit-card">
+    <h2 id="exitTitle">Exit Quiz LꝎP?</h2>
+    <p>Are you sure you want to exit?</p>
+    <div class="row">
+      <button class="secondary" onclick="closeExitDialog()">
+        Cancel
+      </button>
+      <button class="main" onclick="confirmExit()">
+        Exit
+      </button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
