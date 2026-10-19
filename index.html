@@ -851,7 +851,37 @@ function loadData(){
 }
 const loaded=loadData();questions=loaded.questions;sets=loaded.sets.map(s=>({...s,questionIds:s.questionIds.filter(id=>loaded.questions.some(q=>q.id===id))}));
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));}catch(e){alert("Unable to save data in the browser. Download a backup if possible.");}}
-function normalize(text){return String(text).normalize("NFKC").toLowerCase().replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"").replace(/\s+/g," ").trim();}
+
+function normalize(text) {
+  return String(text ?? "")
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .trim();
+}
+
+function answersMatch(userAnswer, correctAnswer) {
+  const user = normalize(userAnswer);
+  const correct = normalize(correctAnswer);
+
+  
+  const hasNumberRange = /\d+\s*[-–—]\s*\d+/.test(correctAnswer);
+  const hasBibleReference = /\d+\s*:\s*\d+/.test(correctAnswer);
+
+  if (hasNumberRange || hasBibleReference) {
+    const normalizeReference = text =>
+      normalize(text)
+        .replace(/[–—]/g, "-")
+        .replace(/\./g, "");
+
+    return normalizeReference(userAnswer) ===
+           normalizeReference(correctAnswer);
+  }
+  const flexible = text =>
+    normalize(text).replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g, "");
+
+  return flexible(userAnswer) === flexible(correctAnswer);
+}
 function parseAnswers(text){return text.split(/^\s*---\s*$/m).map(s=>s.trim()).filter(Boolean);}
 function getActiveQuestions(){if(selectedSetId==="all")return questions;const set=sets.find(s=>s.id===selectedSetId);if(!set)return questions;return set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean);}
 function shuffleQuestions(){const active=getActiveQuestions();order=active.map(q=>q.id);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}}
@@ -897,16 +927,88 @@ function showQuestion(message="",resetTimer=true){
   answered=false;const q=currentQuestion();if(!q){restartGame();return;}qbox.textContent=(current+1)+". "+q.question;document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;answerBox.value="";answerBox.disabled=false;document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");startQuestionTimer(resetTimer);saveQuizSession();
   if(message){const note=document.createElement("div");note.className="green";note.textContent=message;document.getElementById("feedback").appendChild(note);}
 }
-function checkAnswer(){
-  if(answered||!ramble)return;const input=document.getElementById("answer").value.trim(),feedback=document.getElementById("feedback"),q=currentQuestion();if(!q)return;
-  if(!input){feedback.textContent="⚠️ Please enter your answer first.";feedback.className="amber";return;}
-  stopQuestionTimer();const userNorm=normalize(input),results=q.answers.map(answer=>{const expected=normalize(answer);return{answer,complete:expected.length>0&&userNorm.includes(expected)};}),completeCount=results.filter(r=>r.complete).length,allCorrect=completeCount===q.answers.length;
-  attempts.push({question:q.question,userAnswer:input,allCorrect:allCorrect,answers:results.map(r=>({text:r.answer,correct:r.complete}))});answered=true;feedback.replaceChildren();
-  const heading=document.createElement("div");heading.className=allCorrect?"green":completeCount>0?"amber":"red";heading.style.fontWeight="bold";heading.style.fontSize="18px";heading.textContent=allCorrect?"✅ CORRECT! COMPLETE ANSWER!":completeCount>0?"⚠️ PARTIALLY CORRECT!":"❌ INCORRECT OR INCOMPLETE ANSWER!";feedback.appendChild(heading);
-  const title=document.createElement("div");title.style.fontWeight="bold";title.style.marginTop="12px";title.textContent="ALL CORRECT ANSWERS:";feedback.appendChild(title);
-  results.forEach((r,i)=>{const line=document.createElement("div");line.className="answer-result "+(r.complete?"green":"red");line.textContent=`${r.complete?"✓":"✗"} ${i+1}. ${r.answer}`;feedback.appendChild(line);});
-  if(allCorrect)score++;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("answer").disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.remove("hidden");
+
+function checkAnswer() {
+  if (answered || !ramble) return;
+
+  const input = document.getElementById("answer").value.trim();
+  const feedback = document.getElementById("feedback");
+  const q = currentQuestion();
+
+  if (!q) return;
+
+  if (!input) {
+    feedback.textContent = "⚠️ Please enter your answer first.";
+    feedback.className = "amber";
+    return;
+  }
+
+  stopQuestionTimer();
+
+  const results = q.answers.map(answer => ({
+    answer,
+    complete:
+      normalize(answer).length > 0 &&
+      answersMatch(input, answer)
+  }));
+
+  const completeCount = results.filter(r => r.complete).length;
+  const allCorrect = completeCount === q.answers.length;
+
+  attempts.push({
+    question: q.question,
+    userAnswer: input,
+    allCorrect: allCorrect,
+    answers: results.map(r => ({
+      text: r.answer,
+      correct: r.complete
+    }))
+  });
+
+  answered = true;
+  feedback.replaceChildren();
+
+  const heading = document.createElement("div");
+  heading.className = allCorrect
+    ? "green"
+    : completeCount > 0
+      ? "amber"
+      : "red";
+
+  heading.style.fontWeight = "bold";
+  heading.style.fontSize = "18px";
+
+  heading.textContent = allCorrect
+    ? "✅ CORRECT! COMPLETE ANSWER!"
+    : completeCount > 0
+      ? "⚠️ PARTIALLY CORRECT!"
+      : "❌ INCORRECT OR INCOMPLETE ANSWER!";
+
+  feedback.appendChild(heading);
+
+  const title = document.createElement("div");
+  title.style.fontWeight = "bold";
+  title.style.marginTop = "12px";
+  title.textContent = "ALL CORRECT ANSWERS:";
+  feedback.appendChild(title);
+
+  results.forEach((r, i) => {
+    const line = document.createElement("div");
+    line.className = "answer-result " + (r.complete ? "green" : "red");
+    line.textContent = `${r.complete ? "✓" : "✗"} ${i + 1}. ${r.answer}`;
+    feedback.appendChild(line);
+  });
+
+  if (allCorrect) score++;
+
+  document.getElementById("score").textContent =
+    "Correct Answers: " + score;
+
+  document.getElementById("answer").disabled = true;
+  document.getElementById("checkBtn").classList.add("hidden");
+  document.getElementById("nextBtn").classList.remove("hidden");
 }
+
 function nextQuestion(){if(!answered||!ramble)return;stopQuestionTimer();current++;showQuestion();}
 function saveCompletedQuiz(){
   if(roundSaved)return true;const selectedSet=sets.find(s=>s.id===selectedSetId),record={id:makeId("history"),date:new Date().toISOString(),setName:selectedSet?selectedSet.name:"Entire Question Bank",round:round,score:score,total:order.length,attempts:JSON.parse(JSON.stringify(attempts))};
