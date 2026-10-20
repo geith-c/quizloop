@@ -851,7 +851,24 @@ function loadData(){
 }
 const loaded=loadData();questions=loaded.questions;sets=loaded.sets.map(s=>({...s,questionIds:s.questionIds.filter(id=>loaded.questions.some(q=>q.id===id))}));
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));}catch(e){alert("Unable to save data in the browser. Download a backup if possible.");}}
-function normalize(text){return String(text).normalize("NFKC").toLowerCase().replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"").replace(/\s+/g,"").replace(/ayonsabiblia/g, "asb");}
+function normalize(text){return String(text).normalize("NFKC").toLowerCase().replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"").replace(/\s+/g,"").replace(/ayonsabiblia/g, "asb").replace(/iij n/g,"2jn")
+.replace(/iiijn/g,"3jn")
+.replace(/iijn/g,"2jn")
+.replace(/ijn/g,"1jn")
+.replace(/iicor/g,"2cor")
+.replace(/icor/g,"1cor")
+.replace(/iitim/g,"2tim")
+.replace(/itim/g,"1tim")
+.replace(/iites/g,"2tes")
+.replace(/ites/g,"1tes")
+.replace(/iicro/g,"2cro")
+.replace(/icro/g,"1cro")
+.replace(/iihari/g,"2hari")
+.replace(/ihari/g,"1hari")
+.replace(/iisam/g,"2sam")
+.replace(/isam/g,"1sam")
+.replace(/iiped/g,"2ped")
+.replace(/iped/g,"1ped");}
 function parseAnswers(text){return text.split(/^\s*---\s*$/m).map(s=>s.trim()).filter(Boolean);}
 function getActiveQuestions(){if(selectedSetId==="all")return questions;const set=sets.find(s=>s.id===selectedSetId);if(!set)return questions;return set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean);}
 function shuffleQuestions(){const active=getActiveQuestions();order=active.map(q=>q.id);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}}
