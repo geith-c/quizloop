@@ -851,7 +851,7 @@ function loadData(){
 }
 const loaded=loadData();questions=loaded.questions;sets=loaded.sets.map(s=>({...s,questionIds:s.questionIds.filter(id=>loaded.questions.some(q=>q.id===id))}));
 function persist(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({questions,sets}));}catch(e){alert("Unable to save data in the browser. Download a backup if possible.");}}
-function normalize(text){return String(text).normalize("NFKC").toLowerCase().replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"").replace(/\s+/g,"").replace(/ayonsabiblia/g, "asb").replace(/iij n/g,"2jn")
+function normalize(text){return String(text).normalize("NFKC").toLowerCase().replace(/[.,;:!?'"“”‘’()[\]{}\-–—]/g,"").replace(/\s+/g,"").replace(/ayonsabiblia/g, "asb").replace(/ezek/g,"eze")
 .replace(/iiijn/g,"3jn")
 .replace(/iijn/g,"2jn")
 .replace(/ijn/g,"1jn")
