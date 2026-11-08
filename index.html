@@ -521,7 +521,93 @@ body.light-mode .app-dialog-ok {
   background: linear-gradient(135deg, #258bff, #70c9ff);
   color: #fff;
 }
-  
+ 
+.answer-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(0,0,0,.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.answer-confirm-box {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow: hidden;
+  background: #17243a;
+  color: white;
+  border: 1px solid #42618b;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+
+.answer-confirm-title {
+  font-size: 21px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.answer-confirm-message {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.answer-confirm-section {
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.answer-confirm-question {
+  background: #203957;
+  border: 1px solid #426b96;
+}
+
+.answer-confirm-answer {
+  background: #253d32;
+  border: 1px solid #477c5c;
+}
+
+.answer-confirm-label {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 9px;
+}
+
+.answer-confirm-question .answer-confirm-label {
+  color: #80c5ff;
+}
+
+.answer-confirm-answer .answer-confirm-label {
+  color: #8de6ad;
+}
+
+.answer-confirm-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 30vh;
+  overflow-y: auto;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.answer-confirm-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.answer-confirm-buttons button {
+  flex: 1;
+  min-height: 46px;
+  font-size: 16px;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -914,15 +1000,157 @@ function showQuestion(message="",resetTimer=true){
   answered=false;const q=currentQuestion();if(!q){restartGame();return;}qbox.textContent=(current+1)+". "+q.question;document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;answerBox.value="";answerBox.disabled=false;document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");startQuestionTimer(resetTimer);saveQuizSession();
   if(message){const note=document.createElement("div");note.className="green";note.textContent=message;document.getElementById("feedback").appendChild(note);}
 }
-function checkAnswer(){
-  if(answered||!ramble)return;const input=document.getElementById("answer").value.trim(),feedback=document.getElementById("feedback"),q=currentQuestion();if(!q)return;
-  if(!input){feedback.textContent="⚠️ Please enter your answer first.";feedback.className="amber";return;}
-  stopQuestionTimer();const userNorm=normalize(input),results=q.answers.map(answer=>{const expected=normalize(answer);return{answer,complete:expected.length>0&&userNorm.includes(expected)};}),completeCount=results.filter(r=>r.complete).length,allCorrect=completeCount===q.answers.length;
-  attempts.push({question:q.question,userAnswer:input,allCorrect:allCorrect,answers:results.map(r=>({text:r.answer,correct:r.complete}))});answered=true;feedback.replaceChildren();
-  const heading=document.createElement("div");heading.className=allCorrect?"green":completeCount>0?"amber":"red";heading.style.fontWeight="bold";heading.style.fontSize="18px";heading.textContent=allCorrect?"✅ CORRECT! COMPLETE ANSWER!":completeCount>0?"⚠️ PARTIALLY CORRECT!":"❌ INCORRECT OR INCOMPLETE ANSWER!";feedback.appendChild(heading);
-  const title=document.createElement("div");title.style.fontWeight="bold";title.style.marginTop="12px";title.textContent="ALL CORRECT ANSWERS:";feedback.appendChild(title);
-  results.forEach((r,i)=>{const line=document.createElement("div");line.className="answer-result "+(r.complete?"green":"red");line.textContent=`${r.complete?"✓":"✗"} ${i+1}. ${r.answer}`;feedback.appendChild(line);});
-  if(allCorrect)score++;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("answer").disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.remove("hidden");
+function confirmAnswerPreview(question, answer) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "answer-confirm-overlay";
+
+    const box = document.createElement("div");
+    box.className = "answer-confirm-box";
+
+    const title = document.createElement("div");
+    title.className = "answer-confirm-title";
+    title.textContent = "ARE YOU SURE?";
+
+    const message = document.createElement("div");
+    message.className = "answer-confirm-message";
+    message.textContent = "Review your answer before checking.";
+
+    function makeSection(labelText, content, type) {
+      const section = document.createElement("div");
+      section.className = "answer-confirm-section " + type;
+
+      const label = document.createElement("div");
+      label.className = "answer-confirm-label";
+      label.textContent = labelText;
+
+      const text = document.createElement("div");
+      text.className = "answer-confirm-text";
+      text.textContent = content;
+
+      section.append(label, text);
+      return section;
+    }
+
+    const questionBox = makeSection(
+      "📘 QUESTION",
+      question,
+      "answer-confirm-question"
+    );
+
+    const answerBox = makeSection(
+      "✍️ YOUR ANSWER",
+      answer,
+      "answer-confirm-answer"
+    );
+
+    const buttons = document.createElement("div");
+    buttons.className = "answer-confirm-buttons";
+
+    const yes = document.createElement("button");
+    yes.className = "main";
+    yes.textContent = "YES";
+
+    const no = document.createElement("button");
+    no.className = "secondary";
+    no.textContent = "NO";
+
+    function close(result) {
+      overlay.remove();
+      resolve(result);
+    }
+
+    yes.onclick = () => close(true);
+    no.onclick = () => close(false);
+
+    buttons.append(yes, no);
+    box.append(title, message, questionBox, answerBox, buttons);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+async function checkAnswer(){
+  if(answered||!ramble)return;
+
+  const input=document.getElementById("answer").value.trim();
+  const feedback=document.getElementById("feedback");
+  const q=currentQuestion();
+  const checkBtn=document.getElementById("checkBtn");
+
+  if(!q)return;
+
+  if(!input){
+    feedback.textContent="⚠️ Please enter your answer first.";
+    feedback.className="amber";
+    return;
+  }
+
+  checkBtn.disabled=true;
+
+  const confirmed=await confirmAnswerPreview(q.question,input);
+
+  checkBtn.disabled=false;
+
+  if(!confirmed)return;
+
+  stopQuestionTimer();
+
+  const userNorm=normalize(input);
+  const results=q.answers.map(answer=>{
+    const expected=normalize(answer);
+    return {
+      answer,
+      complete:expected.length>0&&userNorm.includes(expected)
+    };
+  });
+
+  const completeCount=results.filter(r=>r.complete).length;
+  const allCorrect=completeCount===q.answers.length;
+
+  attempts.push({
+    question:q.question,
+    userAnswer:input,
+    allCorrect:allCorrect,
+    answers:results.map(r=>({
+      text:r.answer,
+      correct:r.complete
+    }))
+  });
+
+  answered=true;
+  feedback.replaceChildren();
+
+  const heading=document.createElement("div");
+  heading.className=allCorrect?"green":completeCount>0?"amber":"red";
+  heading.style.fontWeight="bold";
+  heading.style.fontSize="18px";
+  heading.textContent=allCorrect
+    ?"✅ CORRECT! COMPLETE ANSWER!"
+    :completeCount>0
+    ?"⚠️ PARTIALLY CORRECT!"
+    :"❌ INCORRECT OR INCOMPLETE ANSWER!";
+
+  feedback.appendChild(heading);
+
+  const title=document.createElement("div");
+  title.style.fontWeight="bold";
+  title.style.marginTop="12px";
+  title.textContent="ALL CORRECT ANSWERS:";
+  feedback.appendChild(title);
+
+  results.forEach((r,i)=>{
+    const line=document.createElement("div");
+    line.className="answer-result "+(r.complete?"green":"red");
+    line.textContent=`${r.complete?"✓":"✗"} ${i+1}. ${r.answer}`;
+    feedback.appendChild(line);
+  });
+
+  if(allCorrect)score++;
+
+  document.getElementById("score").textContent="Correct Answers: "+score;
+  document.getElementById("answer").disabled=true;
+  document.getElementById("checkBtn").classList.add("hidden");
+  document.getElementById("nextBtn").classList.remove("hidden");
 }
 function nextQuestion(){if(!answered||!ramble)return;stopQuestionTimer();current++;showQuestion();}
 function saveCompletedQuiz(){
