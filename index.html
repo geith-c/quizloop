@@ -650,6 +650,86 @@ body.light-mode .answer-confirm-section {
 body.light-mode .answer-confirm-text {
   color: #163653;
 }
+
+#setsPanel {
+  height: calc(100dvh - 150px);
+  min-height: 670px;
+  overflow: hidden;
+}
+
+.sets-screen {
+  height: 100%;
+  min-height: 0;
+}
+
+.sets-create-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.sets-heading {
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sets-heading h2 {
+  margin: 0;
+}
+
+.set-fixed-top {
+  flex-shrink: 0;
+}
+
+.set-question-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 2px;
+}
+
+.set-create-footer {
+  flex-shrink: 0;
+  padding-top: 10px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.set-create-footer .row button {
+  flex: 1;
+}
+
+.sets-list-panel {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 600px) {
+  #setsPanel {
+    height: calc(100dvh - 130px);
+  }
+
+  .sets-heading {
+    gap: 8px;
+  }
+
+  .sets-heading h2 {
+    font-size: 18px;
+  }
+
+  .sets-heading button {
+    flex-shrink: 0;
+  }
+}
 </style>
 </head>
 <body>
@@ -807,31 +887,82 @@ What is the next question?
 </section>
 
 <section id="setsPanel" class="hidden">
-<div class="panel">
-<h2>🗂️ Custom Question Sets</h2>
-<p class="small">Create your own sets and choose any number of questions. There is no fixed limit. A question can belong to multiple sets.</p>
-<details id="setEditorDetails">
-<summary>✚ Create / Edit a Set</summary>
-<label for="setNameInput">Set Name</label>
-<input id="setNameInput" placeholder="Example: Faith">
-<label>Select Questions to Include</label>
-<div class="row">
-<button class="secondary" onclick="setAllChecks(true)">☑ Select All</button>
-<button class="secondary" onclick="setAllChecks(false)">☐ Clear Selection</button>
-</div>
-<div id="setQuestionPicker"></div>
-<div class="info"><span id="pickedCount">0 questions selected</span></div>
-<div class="row">
-<button class="main" id="saveSetBtn" onclick="saveSet()">➕ Create Set</button>
-<button class="secondary hidden" id="cancelSetBtn" onclick="cancelSetEdit()">Cancel</button>
-</div>
-</details>
-</div>
-<div class="panel">
-<h2>📂 My Question Sets</h2>
-<p class="small">Open a set to preview the questions inside it.</p>
-<div id="setList"></div>
-</div>
+
+  <!-- CREATE SET SCREEN -->
+  <div id="setCreateScreen" class="sets-screen">
+    <div class="panel sets-create-panel">
+
+      <div class="row sets-heading">
+        <h2>🗂️ Create Question Set</h2>
+        <button class="secondary" type="button" onclick="showMySetsScreen()">
+          📂 My Sets
+        </button>
+      </div>
+
+      <p class="small">
+        Choose a name and select the questions you want to include.
+      </p>
+
+      <div class="set-fixed-top">
+        <label for="setNameInput">Set Name</label>
+        <input id="setNameInput" placeholder="Example: Faith">
+
+        <label>Select Questions to Include</label>
+
+        <div class="row">
+          <button class="secondary" type="button" onclick="setAllChecks(true)">
+            ☑ Select All
+          </button>
+          <button class="secondary" type="button" onclick="setAllChecks(false)">
+            ☐ Clear Selection
+          </button>
+        </div>
+      </div>
+
+      <!-- Only this question list scrolls -->
+      <div id="setQuestionPicker" class="set-question-scroll"></div>
+
+      <!-- Fixed bottom area -->
+      <div class="set-create-footer">
+        <div class="info">
+          <span id="pickedCount">0 questions selected</span>
+        </div>
+
+        <div class="row">
+          <button class="main" id="saveSetBtn" onclick="saveSet()">
+            ➕ Create Set
+          </button>
+
+          <button class="secondary hidden" id="cancelSetBtn"
+            onclick="cancelSetEdit();showMySetsScreen()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MY QUESTION SETS SCREEN -->
+  <div id="setListScreen" class="sets-screen hidden">
+    <div class="panel sets-list-panel">
+
+      <div class="row sets-heading">
+        <h2>📂 My Question Sets</h2>
+        <button class="secondary" type="button" onclick="showSetCreateScreen()">
+          ➕ Create Set
+        </button>
+      </div>
+
+      <p class="small">
+        Open a set to preview the questions inside it.
+      </p>
+
+      <div id="setList"></div>
+
+    </div>
+  </div>
+
 </section>
 
 <section id="backupPanel" class="hidden">
@@ -1364,6 +1495,7 @@ function showTab(tab){
   if(tab === "sets"){
     renderSetPicker();
     renderSets();
+    showSetCreateScreen();
   }
 
   if(tab === "history") renderQuizHistory();
@@ -1488,21 +1620,137 @@ function renderQuestions(){
   });
   document.getElementById("questionCount").textContent=count+" of "+questions.length+" questions";if(count===0){const p=document.createElement("p");p.className="small";p.textContent="No matching questions found.";list.appendChild(p);}
 }
-function renderSetPicker(){
-  const picker=document.getElementById("setQuestionPicker");picker.replaceChildren();const selected=new Set();if(editingSetId){const existing=sets.find(s=>s.id===editingSetId);if(existing)existing.questionIds.forEach(id=>selected.add(id));}
-  if(questions.length===0){const p=document.createElement("p");p.className="small";p.textContent="Add questions to the Question Bank first.";picker.appendChild(p);updatePickedCount();return;}
-  questions.forEach((q,index)=>{const label=document.createElement("label");label.className="pick";const cb=document.createElement("input");cb.type="checkbox";cb.className="set-question-check";cb.value=q.id;cb.checked=selected.has(q.id);cb.onchange=updatePickedCount;const text=document.createElement("span");text.textContent=(index+1)+". "+q.question;label.append(cb,text);picker.appendChild(label);});updatePickedCount();
+function showSetCreateScreen() {
+  document.getElementById("setCreateScreen").classList.remove("hidden");
+  document.getElementById("setListScreen").classList.add("hidden");
+}
+
+function showMySetsScreen() {
+  renderSets();
+  document.getElementById("setCreateScreen").classList.add("hidden");
+  document.getElementById("setListScreen").classList.remove("hidden");
+}
+function renderSetPicker() {
+  const picker = document.getElementById("setQuestionPicker");
+
+  // Preserve current selections when the screen is refreshed
+  const hasExistingChecks =
+    picker.querySelector(".set-question-check") !== null;
+
+  const selected = new Set(
+    hasExistingChecks
+      ? Array.from(
+          picker.querySelectorAll(".set-question-check:checked")
+        ).map(cb => cb.value)
+      : []
+  );
+
+  // When opening an existing set for the first time,
+  // load its saved question selections.
+  if (!hasExistingChecks && editingSetId) {
+    const existing = sets.find(s => s.id === editingSetId);
+    if (existing) {
+      existing.questionIds.forEach(id => selected.add(id));
+    }
+  }
+
+  picker.replaceChildren();
+
+  if (questions.length === 0) {
+    const p = document.createElement("p");
+    p.className = "small";
+    p.textContent = "Add questions to the Question Bank first.";
+    picker.appendChild(p);
+    updatePickedCount();
+    return;
+  }
+
+  questions.forEach((q, index) => {
+    const label = document.createElement("label");
+    label.className = "pick";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "set-question-check";
+    cb.value = q.id;
+    cb.checked = selected.has(q.id);
+    cb.onchange = updatePickedCount;
+
+    const text = document.createElement("span");
+    text.textContent = (index + 1) + ". " + q.question;
+
+    label.append(cb, text);
+    picker.appendChild(label);
+  });
+
+  updatePickedCount();
 }
 function setAllChecks(checked){document.querySelectorAll(".set-question-check").forEach(cb=>cb.checked=checked);updatePickedCount();}
 function updatePickedCount(){const count=document.querySelectorAll(".set-question-check:checked").length,label=document.getElementById("pickedCount");if(label)label.textContent=count+" questions selected";}
-function saveSet(){
-  const name=document.getElementById("setNameInput").value.trim(),questionIds=Array.from(document.querySelectorAll(".set-question-check:checked")).map(cb=>cb.value);
-  if(!name){alert("Please enter a set name.");return;}if(questionIds.length===0){alert("Select at least one question for this set.");return;}
-  if(editingSetId){const set=sets.find(s=>s.id===editingSetId);if(set){set.name=name;set.questionIds=questionIds;}}else sets.push({id:makeId("set"),name,questionIds});
-  persist();cancelSetEdit();renderSets();renderSetPicker();renderSetSelect();
+function saveSet() {
+  const name = document.getElementById("setNameInput").value.trim();
+
+  const questionIds = Array.from(
+    document.querySelectorAll(".set-question-check:checked")
+  ).map(cb => cb.value);
+
+  if (!name) {
+    alert("Please enter a set name.");
+    return;
+  }
+
+  if (questionIds.length === 0) {
+    alert("Select at least one question for this set.");
+    return;
+  }
+
+  if (editingSetId) {
+    const set = sets.find(s => s.id === editingSetId);
+
+    if (set) {
+      set.name = name;
+      set.questionIds = questionIds;
+    }
+  } else {
+    sets.push({
+      id: makeId("set"),
+      name,
+      questionIds
+    });
+  }
+
+  persist();
+
+  cancelSetEdit();
+
+  // Clear the previous selections for the next new set
+  document.getElementById("setQuestionPicker").replaceChildren();
+  renderSetPicker();
+
+  renderSets();
+  renderSetSelect();
+
+  showMySetsScreen();
 }
 function cancelSetEdit(){editingSetId=null;document.getElementById("setNameInput").value="";document.getElementById("saveSetBtn").textContent="➕ Create Set";document.getElementById("cancelSetBtn").classList.add("hidden");renderSetPicker();}
-function editSet(id){const set=sets.find(s=>s.id===id);if(!set)return;editingSetId=id;document.getElementById("setNameInput").value=set.name;document.getElementById("saveSetBtn").textContent="💾 Save Set";document.getElementById("cancelSetBtn").classList.remove("hidden");renderSetPicker();document.getElementById("setEditorDetails").open=true;document.getElementById("setNameInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
+function editSet(id) {
+  const set = sets.find(s => s.id === id);
+  if (!set) return;
+
+  editingSetId = id;
+
+  document.getElementById("setNameInput").value = set.name;
+  document.getElementById("saveSetBtn").textContent = "💾 Save Set";
+  document.getElementById("cancelSetBtn").classList.remove("hidden");
+
+  // Clear old checks so the selected questions come from this set
+  document.getElementById("setQuestionPicker").replaceChildren();
+
+  renderSetPicker();
+  showSetCreateScreen();
+
+  document.getElementById("setNameInput").focus();
+}
 function playSet(id){selectedSetId=id;renderSetSelect();showTab("play");restartGame("reset");}
 async function deleteSet(id) {
   const set = sets.find(s => s.id === id);
