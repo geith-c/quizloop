@@ -496,6 +496,50 @@ body.light-mode .app-dialog-ok {
   background: linear-gradient(135deg, #258bff, #70c9ff);
   color: #fff;
 }
+#restartConfirm{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(2,8,20,.80);
+}
+
+#restartConfirm.hidden{
+  display:none;
+}
+
+.restart-confirm-box{
+  width:100%;
+  max-width:380px;
+  padding:24px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:var(--surface);
+  text-align:center;
+  box-sizing:border-box;
+}
+
+.restart-confirm-box h2{
+  margin-top:0;
+}
+
+.restart-confirm-box p{
+  line-height:1.6;
+  margin-bottom:22px;
+}
+
+.restart-confirm-box .row{
+  display:flex;
+  gap:10px;
+}
+
+.restart-confirm-box button{
+  flex:1;
+  min-width:0;
+}  
  
 .container {
   position: relative;
@@ -680,7 +724,7 @@ body.light-mode .answer-confirm-text {
 <div id="result" class="hidden"></div>
 <div class="row">
 <button class="secondary" id="rambleBtn" onclick="toggleRamble()">⏸ PAUSE QUIZ</button>
-<button class="secondary" onclick="restartGame()">🔄 RESTART</button>
+<button class="secondary" onclick="confirmRestart()">🔄 RESTART</button>
 </div>
 </section>
   
@@ -1171,6 +1215,22 @@ async function deleteQuizRecord(id) {
   } else {
     quizHistory = previousHistory;
   }
+}
+function confirmRestart(){
+  document.getElementById("restartConfirm")
+    .classList.remove("hidden");
+}
+
+function confirmRestartYes(){
+  document.getElementById("restartConfirm")
+    .classList.add("hidden");
+
+  restartGame("same");
+}
+
+function confirmRestartNo(){
+  document.getElementById("restartConfirm")
+    .classList.add("hidden");
 }
 function restartGame(mode="same"){
   stopQuestionTimer();
@@ -2011,6 +2071,25 @@ window.alert = function(message) {
       </button>
       <button class="main" onclick="confirmExit()">
         Exit
+      </button>
+    </div>
+  </div>
+</div>
+<div id="restartConfirm" class="hidden">
+  <div class="restart-confirm-box">
+    <h2>🔄 RESTART QUIZ?</h2>
+    <p>
+      Are you sure you want to restart this quiz?
+      Your current progress will be lost.
+    </p>
+
+    <div class="row">
+      <button class="main" onclick="confirmRestartYes()">
+        YES, RESTART
+      </button>
+
+      <button class="secondary" onclick="confirmRestartNo()">
+        NO, CANCEL
       </button>
     </div>
   </div>
