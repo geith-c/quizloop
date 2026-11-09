@@ -2570,9 +2570,12 @@ function closeExitDialog(){
 
 function confirmExit(){
   closeExitDialog();
-  
-  window.location.hash = "home";
-  showTab("home");
+
+  if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.close();
+  }
 }
 </script>
 <div id="appDialogOverlay" class="app-dialog-overlay hidden"
