@@ -806,6 +806,15 @@ body.light-mode .answer-confirm-text {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+#playSetScreen,
+#playQuizScreen {
+  width: 100%;
+}
+
+#playSetScreen .panel {
+  min-height: 0;
+}
 </style>
 </head>
 <body>
@@ -840,48 +849,151 @@ body.light-mode .answer-confirm-text {
 </section>
 
 <section id="playPanel" class="hidden">
-<div class="panel">
-<label for="setDropdownButton">Select a Question Set</label>
-<div class="set-selector">
-<button type="button" id="setDropdownButton" class="set-dropdown-button" aria-expanded="false" aria-controls="setDropdownList" onclick="toggleSetDropdown()"><span id="selectedSetLabel">📚 All Questions</span><span class="chevron">▾</span></button>
-<div id="setDropdownList" class="set-dropdown-list hidden"></div>
-<select id="setSelect" class="hidden" aria-hidden="true" tabindex="-1" onchange="selectSet(this.value)"></select>
-</div>
-<p class="small">Choose a set below to practice only those questions, or select the entire Question Bank.</p>
-</div>
-<div class="info">
-<span id="progress">Question: 0/0</span><span id="score">Correct Answers: 0</span><span id="round">Round: 1</span>
-</div>
-<div id="game">
-<div id="timerSettings">
-  <div class="timer-row">
-    <input id="timerEnabled" type="checkbox" checked aria-label="Enable timer">
-    <div class="timer-duration">
-      <div class="timer-sound-buttons">
-        <button type="button" id="pianoButton" class="sound-btn on" onclick="togglePiano()" aria-label="Toggle piano" aria-pressed="true">P</button>
-        <button type="button" id="violinButton" class="sound-btn off" onclick="toggleViolin()" aria-label="Toggle violin" aria-pressed="false">V</button>
+
+ 
+  <div id="playSetScreen">
+    <div class="panel">
+      <h2>📚 Select a Question Set</h2>
+      <p class="small">Choose which questions you want to practice.</p>
+
+      <div class="set-selector">
+        <button type="button" id="setDropdownButton"
+          class="set-dropdown-button"
+          aria-expanded="false"
+          aria-controls="setDropdownList"
+          onclick="toggleSetDropdown()">
+
+          <span id="selectedSetLabel">📚 All Questions</span>
+          <span class="chevron">▾</span>
+        </button>
+
+        <div id="setDropdownList"
+          class="set-dropdown-list hidden"></div>
+
+        <select id="setSelect" class="hidden"
+          aria-hidden="true" tabindex="-1"
+          onchange="selectSet(this.value)">
+        </select>
       </div>
-      <div class="timer-input-row">
-        <input id="timerSeconds" type="number" min="1" max="3600" value="30" aria-label="Timer duration in seconds"><span class="timer-label">sec</span>
-      </div>
+
+      <p class="small">
+        Choose a set to practice only those questions,
+        or select the entire Question Bank.
+      </p>
+
+      <button class="main" type="button"
+        onclick="startQuizScreen()"
+        style="width:100%;margin-top:15px">
+        ▶ START QUIZ
+      </button>
     </div>
-    <input id="organEnabled" type="checkbox" checked class="hidden" aria-label="Enable piano sound">
-    <input id="violinEnabled" type="checkbox" class="hidden" aria-label="Enable violin sound">
-    <strong id="timerValue">00:30</strong>
   </div>
-  <p id="timerStatus" class="small">Timer settings</p>
-</div>
-<div id="question">Add a question in Questions & Sets to get started.</div>
-<textarea id="answer" rows="6" placeholder="Type your answer here..."></textarea>
-<button class="main" id="checkBtn" onclick="checkAnswer()" style="width:100%;margin-top:10px">CHECK ANSWER</button>
-<div id="feedback" aria-live="polite"></div>
-<button class="secondary hidden" id="nextBtn" onclick="nextQuestion()" style="width:100%;margin-top:10px">NEXT QUESTION →</button>
-</div>
-<div id="result" class="hidden"></div>
-<div class="row">
-<button class="secondary" id="rambleBtn" onclick="toggleRamble()">⏸ PAUSE QUIZ</button>
-<button class="secondary" onclick="confirmRestart()">🔄 RESTART</button>
-</div>
+
+
+
+  <div id="playQuizScreen" class="hidden">
+
+    <div class="panel">
+      <button class="secondary"
+        type="button"
+        onclick="showPlaySetScreen()">
+        ← Change Question Set
+      </button>
+    </div>
+
+    <div class="info">
+      <span id="progress">Question: 0/0</span>
+      <span id="score">Correct Answers: 0</span>
+      <span id="round">Round: 1</span>
+    </div>
+
+    <div id="game">
+
+      <div id="timerSettings">
+        <div class="timer-row">
+
+          <input id="timerEnabled" type="checkbox"
+            checked aria-label="Enable timer">
+
+          <div class="timer-duration">
+
+            <div class="timer-sound-buttons">
+              <button type="button" id="pianoButton"
+                class="sound-btn on"
+                onclick="togglePiano()"
+                aria-label="Toggle piano"
+                aria-pressed="true">P</button>
+
+              <button type="button" id="violinButton"
+                class="sound-btn off"
+                onclick="toggleViolin()"
+                aria-label="Toggle violin"
+                aria-pressed="false">V</button>
+            </div>
+
+            <div class="timer-input-row">
+              <input id="timerSeconds" type="number"
+                min="1" max="3600" value="30"
+                aria-label="Timer duration in seconds">
+              <span class="timer-label">sec</span>
+            </div>
+
+          </div>
+
+          <input id="organEnabled" type="checkbox"
+            checked class="hidden"
+            aria-label="Enable piano sound">
+
+          <input id="violinEnabled" type="checkbox"
+            class="hidden"
+            aria-label="Enable violin sound">
+
+          <strong id="timerValue">00:30</strong>
+
+        </div>
+
+        <p id="timerStatus" class="small">Timer settings</p>
+      </div>
+
+      <div id="question">
+        Add a question in Questions & Sets to get started.
+      </div>
+
+      <textarea id="answer" rows="6"
+        placeholder="Type your answer here..."></textarea>
+
+      <button class="main" id="checkBtn"
+        onclick="checkAnswer()"
+        style="width:100%;margin-top:10px">
+        CHECK ANSWER
+      </button>
+
+      <div id="feedback" aria-live="polite"></div>
+
+      <button class="secondary hidden" id="nextBtn"
+        onclick="nextQuestion()"
+        style="width:100%;margin-top:10px">
+        NEXT QUESTION →
+      </button>
+
+    </div>
+
+    <div id="result" class="hidden"></div>
+
+    <div class="row">
+      <button class="secondary" id="rambleBtn"
+        onclick="toggleRamble()">
+        ⏸ PAUSE QUIZ
+      </button>
+
+      <button class="secondary"
+        onclick="confirmRestart()">
+        🔄 RESTART
+      </button>
+    </div>
+
+  </div>
+
 </section>
   
 <div id="answerConfirmScreen" class="answer-confirm-screen hidden">
@@ -1965,6 +2077,15 @@ function renderSets(){
     const row=document.createElement("div");row.className="row";const play=document.createElement("button");play.className="main";play.textContent="▶ Play Set";play.onclick=()=>playSet(set.id);const edit=document.createElement("button");edit.className="secondary";edit.textContent="✏️ Edit";edit.onclick=()=>editSet(set.id);const del=document.createElement("button");del.className="danger";del.textContent="🗑️ Delete";del.onclick=()=>deleteSet(set.id);row.append(play,edit,del);card.appendChild(row);
     const names=set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean),details=document.createElement("details"),summary=document.createElement("summary");summary.textContent="View questions in this set";details.appendChild(summary);const preview=document.createElement("div");preview.className="preview";preview.textContent=names.length?names.map((q,i)=>(i+1)+". "+q.question).join("\n"):"No questions remain in this set.";details.appendChild(preview);card.appendChild(details);list.appendChild(card);
   });
+}
+function showPlaySetScreen() {
+  document.getElementById("playSetScreen").classList.remove("hidden");
+  document.getElementById("playQuizScreen").classList.add("hidden");
+}
+
+function startQuizScreen() {
+  document.getElementById("playSetScreen").classList.add("hidden");
+  document.getElementById("playQuizScreen").classList.remove("hidden");
 }
 function showQuestionScreen(screen) {
   const screens = {
