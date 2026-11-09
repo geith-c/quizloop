@@ -807,13 +807,46 @@ body.light-mode .answer-confirm-text {
   -webkit-overflow-scrolling: touch;
 }
 
-#playSetScreen,
 #playQuizScreen {
   width: 100%;
 }
 
 #playSetScreen .panel {
   min-height: 0;
+}
+  
+#playSetScreen {
+  height: calc(100dvh - 100px);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.play-set-fixed {
+  flex-shrink: 0;
+  padding: 15px;
+}
+
+.play-set-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 15px;
+}
+
+.play-set-footer {
+  flex-shrink: 0;
+  padding: 12px 15px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+
+.play-set-footer button {
+  width: 100%;
 }
 </style>
 </head>
@@ -851,43 +884,51 @@ body.light-mode .answer-confirm-text {
 <section id="playPanel" class="hidden">
 
  
-  <div id="playSetScreen">
-    <div class="panel">
-      <h2>📚 Select a Question Set</h2>
-      <p class="small">Choose which questions you want to practice.</p>
+<div id="playSetScreen" class="play-set-layout">
 
-      <div class="set-selector">
-        <button type="button" id="setDropdownButton"
-          class="set-dropdown-button"
-          aria-expanded="false"
-          aria-controls="setDropdownList"
-          onclick="toggleSetDropdown()">
-
-          <span id="selectedSetLabel">📚 All Questions</span>
-          <span class="chevron">▾</span>
-        </button>
-
-        <div id="setDropdownList"
-          class="set-dropdown-list hidden"></div>
-
-        <select id="setSelect" class="hidden"
-          aria-hidden="true" tabindex="-1"
-          onchange="selectSet(this.value)">
-        </select>
-      </div>
-
-      <p class="small">
-        Choose a set to practice only those questions,
-        or select the entire Question Bank.
-      </p>
-
-      <button class="main" type="button"
-        onclick="startQuizScreen()"
-        style="width:100%;margin-top:15px">
-        ▶ START QUIZ
-      </button>
-    </div>
+  <div class="play-set-fixed">
+    <h2>📚 Select a Question Set</h2>
+    <p class="small">Choose which questions you want to practice.</p>
   </div>
+
+  <div class="play-set-scroll">
+    <div class="set-selector">
+
+      <button type="button" id="setDropdownButton"
+        class="set-dropdown-button"
+        aria-expanded="false"
+        aria-controls="setDropdownList"
+        onclick="toggleSetDropdown()">
+
+        <span id="selectedSetLabel">📚 All Questions</span>
+        <span class="chevron">▾</span>
+      </button>
+
+      <div id="setDropdownList"
+        class="set-dropdown-list hidden"></div>
+
+      <select id="setSelect" class="hidden"
+        aria-hidden="true" tabindex="-1"
+        onchange="selectSet(this.value)"></select>
+
+    </div>
+
+    <p class="small">
+      Choose a set to practice only those questions,
+      or select the entire Question Bank.
+    </p>
+  </div>
+
+  <div class="play-set-footer">
+    <button class="main" id="startQuizBtn"
+     type="button"
+     onclick="startQuizScreen()"
+     disabled>
+     ▶ START QUIZ
+   </button>
+  </div>
+
+</div>
 
 
 
@@ -956,7 +997,7 @@ body.light-mode .answer-confirm-text {
       </div>
 
       <div id="question">
-        Add a question in Questions & Sets to get started.
+        Your selected question will appear here.
       </div>
 
       <textarea id="answer" rows="6"
@@ -1488,7 +1529,13 @@ function toggleSetDropdown(){
   const list=document.getElementById("setDropdownList"),button=document.getElementById("setDropdownButton"),opening=list.classList.contains("hidden");
   list.classList.toggle("hidden",!opening);button.setAttribute("aria-expanded",String(opening));
 }
-function selectSet(id){selectedSetId=id;document.getElementById("setDropdownList").classList.add("hidden");document.getElementById("setDropdownButton").setAttribute("aria-expanded","false");renderSetSelect();restartGame("reset");}
+function updateStartQuizButton() {
+  const button = document.getElementById("startQuizBtn");
+  const selected = document.getElementById("setSelect").value;
+
+  button.disabled = selected === "";
+}
+function selectSet(id){selectedSetId=id;document.getElementById("setDropdownList").classList.add("hidden");document.getElementById("setDropdownButton").setAttribute("aria-expanded","false");renderSetSelect();restartGame("reset");updateStartQuizButton();}
 function showQuestion(message="",resetTimer=true){
   const qbox=document.getElementById("question"),answerBox=document.getElementById("answer");document.getElementById("feedback").replaceChildren();document.getElementById("result").classList.add("hidden");document.getElementById("game").classList.remove("hidden");
   if(order.length===0){qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";answerBox.value="";answerBox.disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");document.getElementById("progress").textContent="Question: 0/0";document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;stopQuestionTimer();timerRemaining=saveTimerSettings();updateTimerDisplay();return;}
@@ -2081,6 +2128,7 @@ function renderSets(){
 function showPlaySetScreen() {
   document.getElementById("playSetScreen").classList.remove("hidden");
   document.getElementById("playQuizScreen").classList.add("hidden");
+  updateStartQuizButton();
 }
 
 function startQuizScreen() {
