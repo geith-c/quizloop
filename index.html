@@ -653,7 +653,7 @@ body.light-mode .answer-confirm-text {
 
 #setsPanel {
   height: calc(100dvh - 150px);
-  min-height: 670px;
+  min-height: 800px;
   overflow: hidden;
 }
 
@@ -729,6 +729,82 @@ body.light-mode .answer-confirm-text {
   .sets-heading button {
     flex-shrink: 0;
   }
+}
+
+.question-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.question-menu-button {
+  width: 100%;
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface2);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.question-menu-button:active {
+  transform: scale(.98);
+}
+
+.question-back {
+  margin-bottom: 15px;
+}
+
+#questionEditorScreen,
+#questionBulkScreen,
+#questionBrowserScreen {
+  width: 100%;
+}
+
+#questionBrowserScreen .panel {
+  min-height: 0;
+}
+
+#questionBrowserScreen #questionList {
+  padding-bottom: 15px;
+}
+
+#questionBrowserScreen {
+  height: calc(100dvh - 100px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.question-browser-panel {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.question-browser-fixed {
+  flex-shrink: 0;
+  background: var(--surface);
+  position: relative;
+  z-index: 5;
+}
+
+.question-browser-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 </style>
 </head>
@@ -841,54 +917,166 @@ body.light-mode .answer-confirm-text {
 </section>
 
 <section id="questionsPanel" class="hidden">
-<div class="panel">
-<h2>📚 Question Bank</h2>
-<p class="small">Add all your questions here. Then choose which sets should include each question.</p>
-<details id="questionEditorDetails">
-<summary>✚ Add / Edit Question</summary>
-<label for="questionInput">Question</label>
-<textarea id="questionInput" rows="2" placeholder="Type your question..."></textarea>
-<label for="answersInput">Required Correct Answers</label>
-<textarea id="answersInput" rows="7" placeholder="Enter the complete correct answer..."></textarea>
-<p class="small">If there are multiple separate answers, place <b>---</b> on its own line between them. If the answer is one long response, do not use this separator.</p>
-<div class="row">
-<button class="main" id="saveQuestionBtn" onclick="saveQuestion()">➕ Add Question</button>
-<button class="secondary hidden" id="cancelQuestionBtn" onclick="cancelQuestionEdit()">Cancel</button>
-</div>
-</details>
-<details id="bulkImportDetails">
-<summary>📋 Bulk Paste Importer</summary>
-<p class="small">Paste a title for the set, then paste your questions and answers. Every question must end with <b>?</b>. Each non-empty line after a question is a separate correct answer until the next question. Numbering such as 1. or 2) is optional and will be removed automatically.</p>
-<label for="bulkTitleInput">Set Name (optional)</label>
-<input id="bulkTitleInput" placeholder="Example: Bible Review Set">
-<label for="bulkPasteInput">Questions and Answers</label>
-<textarea id="bulkPasteInput" rows="10" placeholder="What is the first question?
+
+
+  <div id="questionHomeScreen">
+    <div class="panel">
+      <h2>📚 Question Bank</h2>
+      <p class="small">
+        Manage your questions in separate screens.
+      </p>
+
+      <div class="question-menu-list">
+
+        <button class="question-menu-button"
+          onclick="showQuestionScreen('editor')">
+          <span>➕ Add / Edit Question</span>
+          <span>›</span>
+        </button>
+
+        <button class="question-menu-button"
+          onclick="showQuestionScreen('bulk')">
+          <span>📋 Bulk Paste Importer</span>
+          <span>›</span>
+        </button>
+
+        <button class="question-menu-button"
+          onclick="showQuestionScreen('browser')">
+          <span>🔎 Browse Question Bank</span>
+          <span>›</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="questionEditorScreen" class="hidden">
+    <div class="panel">
+
+      <button class="secondary question-back"
+        onclick="showQuestionScreen('home')">
+        ← Back to Question Bank
+      </button>
+
+      <h2>➕ Add / Edit Question</h2>
+
+      <label for="questionInput">Question</label>
+      <textarea id="questionInput" rows="2"
+        placeholder="Type your question..."></textarea>
+
+      <label for="answersInput">Required Correct Answers</label>
+      <textarea id="answersInput" rows="7"
+        placeholder="Enter the complete correct answer..."></textarea>
+
+      <p class="small">
+        If there are multiple separate answers, place
+        <b>---</b> on its own line between them.
+        If the answer is one long response, do not use this separator.
+      </p>
+
+      <div class="row">
+        <button class="main" id="saveQuestionBtn"
+          onclick="saveQuestion()">
+          ➕ Add Question
+        </button>
+
+        <button class="secondary hidden" id="cancelQuestionBtn"
+          onclick="cancelQuestionEdit()">
+          Cancel
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div id="questionBulkScreen" class="hidden">
+    <div class="panel">
+
+      <button class="secondary question-back"
+        onclick="showQuestionScreen('home')">
+        ← Back to Question Bank
+      </button>
+
+      <h2>📋 Bulk Paste Importer</h2>
+
+      <p class="small">
+        Paste a title for the set, then paste your questions and answers.
+        Every question must end with <b>?</b>. Each non-empty line after
+        a question is a separate correct answer until the next question.
+        Numbering such as 1. or 2) is optional and will be removed automatically.
+      </p>
+
+      <label for="bulkTitleInput">Set Name (optional)</label>
+      <input id="bulkTitleInput"
+        placeholder="Example: Bible Review Set">
+
+      <label for="bulkPasteInput">Questions and Answers</label>
+      <textarea id="bulkPasteInput" rows="10"
+        placeholder="What is the first question?
 First correct answer
 Second correct answer
 
 What is the next question?
 1. First answer
 2) Second answer"></textarea>
-<div class="row">
-<button class="main" type="button" onclick="previewBulkImport()">👀 Preview Import</button>
-<button class="secondary" type="button" onclick="clearBulkImport()">Clear</button>
+
+      <div class="row">
+        <button class="main" type="button"
+          onclick="previewBulkImport()">
+          👀 Preview Import
+        </button>
+
+        <button class="secondary" type="button"
+          onclick="clearBulkImport()">
+          Clear
+        </button>
+      </div>
+
+      <p id="bulkImportStatus" class="small"></p>
+
+      <div id="bulkPreviewList"></div>
+
+      <button id="bulkSaveBtn" class="main" type="button"
+        onclick="saveBulkImport()" disabled
+        style="width:100%;margin-top:10px">
+        💾 Save Selected Questions
+      </button>
+
+    </div>
+  </div>
+
+
+<div id="questionBrowserScreen" class="hidden">
+  <div class="panel question-browser-panel">
+
+    <div class="question-browser-fixed">
+      <button class="secondary question-back"
+        onclick="showQuestionScreen('home')">
+        ← Back to Question Bank
+      </button>
+
+      <h2>🔎 Browse Question Bank</h2>
+
+      <input id="questionSearch"
+        placeholder="Search questions..."
+        oninput="renderQuestions()">
+
+      <div class="info">
+        <span id="questionCount">0 questions</span>
+      </div>
+    </div>
+
+    <div id="questionList" class="question-browser-scroll"></div>
+
+  </div>
 </div>
-<p id="bulkImportStatus" class="small"></p>
-<div id="bulkPreviewList"></div>
-<button id="bulkSaveBtn" class="main" type="button" onclick="saveBulkImport()" disabled style="width:100%;margin-top:10px">💾 Save Selected Questions</button>
-</details>
-<details id="questionBrowserDetails">
-<summary>⌕ Browse Question Bank</summary>
-<input id="questionSearch" placeholder="🔎 Search questions..." oninput="renderQuestions()">
-<div class="info"><span id="questionCount">0 questions</span></div>
-<div id="questionList"></div>
-</details>
-</div>
+
 </section>
 
 <section id="setsPanel" class="hidden">
 
-  <!-- CREATE SET SCREEN -->
   <div id="setCreateScreen" class="sets-screen">
     <div class="panel sets-create-panel">
 
@@ -919,10 +1107,9 @@ What is the next question?
         </div>
       </div>
 
-      <!-- Only this question list scrolls -->
       <div id="setQuestionPicker" class="set-question-scroll"></div>
 
-      <!-- Fixed bottom area -->
+    
       <div class="set-create-footer">
         <div class="info">
           <span id="pickedCount">0 questions selected</span>
@@ -943,7 +1130,7 @@ What is the next question?
     </div>
   </div>
 
-  <!-- MY QUESTION SETS SCREEN -->
+
   <div id="setListScreen" class="sets-screen hidden">
     <div class="panel sets-list-panel">
 
@@ -1588,10 +1775,10 @@ function saveQuestion(){
   const question=document.getElementById("questionInput").value.trim(),answers=parseAnswers(document.getElementById("answersInput").value);
   if(!question){alert("Please enter a question.");return;}if(answers.length===0){alert("Please enter at least one correct answer.");return;}
   if(editingQuestionId){const q=questions.find(q=>q.id===editingQuestionId);if(q){q.question=question;q.answers=answers;}}else questions.push({id:makeId("q"),question,answers});
-  persist();cancelQuestionEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();
+  persist();showQuestionScreen("browser");cancelQuestionEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();
 }
 function cancelQuestionEdit(){editingQuestionId=null;document.getElementById("questionInput").value="";document.getElementById("answersInput").value="";document.getElementById("saveQuestionBtn").textContent="➕ Add Question";document.getElementById("cancelQuestionBtn").classList.add("hidden");}
-function editQuestion(id){const q=questions.find(q=>q.id===id);if(!q)return;editingQuestionId=id;document.getElementById("questionInput").value=q.question;document.getElementById("answersInput").value=q.answers.join("\n---\n");document.getElementById("saveQuestionBtn").textContent="💾 Save Changes";document.getElementById("cancelQuestionBtn").classList.remove("hidden");document.getElementById("questionEditorDetails").open=true;document.getElementById("questionInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
+function editQuestion(id){const q=questions.find(q=>q.id===id);if(!q)return;editingQuestionId=id;document.getElementById("questionInput").value=q.question;document.getElementById("answersInput").value=q.answers.join("\n---\n");document.getElementById("saveQuestionBtn").textContent="💾 Save Changes";document.getElementById("cancelQuestionBtn").classList.remove("hidden");showQuestionScreen("editor");document.getElementById("questionInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
 async function deleteQuestion(id) {
   const q = questions.find(q => q.id === id);
 
@@ -1605,6 +1792,7 @@ async function deleteQuestion(id) {
   });
 
   persist();
+  showQuestionScreen("browser");
   cancelQuestionEdit();
   renderQuestions();
   renderSetPicker();
@@ -1777,6 +1965,32 @@ function renderSets(){
     const row=document.createElement("div");row.className="row";const play=document.createElement("button");play.className="main";play.textContent="▶ Play Set";play.onclick=()=>playSet(set.id);const edit=document.createElement("button");edit.className="secondary";edit.textContent="✏️ Edit";edit.onclick=()=>editSet(set.id);const del=document.createElement("button");del.className="danger";del.textContent="🗑️ Delete";del.onclick=()=>deleteSet(set.id);row.append(play,edit,del);card.appendChild(row);
     const names=set.questionIds.map(id=>questions.find(q=>q.id===id)).filter(Boolean),details=document.createElement("details"),summary=document.createElement("summary");summary.textContent="View questions in this set";details.appendChild(summary);const preview=document.createElement("div");preview.className="preview";preview.textContent=names.length?names.map((q,i)=>(i+1)+". "+q.question).join("\n"):"No questions remain in this set.";details.appendChild(preview);card.appendChild(details);list.appendChild(card);
   });
+}
+function showQuestionScreen(screen) {
+  const screens = {
+    home: "questionHomeScreen",
+    editor: "questionEditorScreen",
+    bulk: "questionBulkScreen",
+    browser: "questionBrowserScreen"
+  };
+
+  Object.values(screens).forEach(id => {
+    document.getElementById(id).classList.add("hidden");
+  });
+
+  const target = screens[screen];
+
+  if (!target) return;
+
+  document.getElementById(target).classList.remove("hidden");
+
+  if (screen === "browser") {
+    renderQuestions();
+  }
+
+  if (screen === "editor") {
+    document.getElementById("questionInput").focus();
+  }
 }
 function bytesToBase64(bytes){let binary="";for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}
 function base64ToBytes(text){const binary=atob(text),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return bytes;}
