@@ -109,7 +109,7 @@ hr{border:0;border-top:1px solid var(--line)}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
-/* Theme toggle */
+
 .theme-toggle{
   position:absolute;
   right:0;
@@ -124,7 +124,7 @@ hr{border:0;border-top:1px solid var(--line)}
   border-radius:12px;
 }
 
-/* LIGHT MODE */
+
 body.light-mode{
   color-scheme:light;
   --bg:#eef8ff;
@@ -302,65 +302,36 @@ body.light-mode hr{
 .screen-edge-glow {
   position: fixed;
   inset: 0;
-  z-index: 99999;
+  z-index: 999;
   pointer-events: none;
   overflow: hidden;
   border: 2px solid rgba(22, 139, 255, 0.45);
   box-sizing: border-box;
 }
 
-/* Ilaw na tumatakbo sa mismong gilid ng screen */
-.screen-edge-glow::before {
-  content: "";
+
+.screen-edge-glow::before,
+.screen-edge-glow::after {
+  content: none;
+}
+
+.edge-runner {
   position: absolute;
-  width: 8px;
-  height: 8px;
   left: 0;
   top: 0;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #ffffff;
 
-  /* Maliwanag na asul na ilaw */
   box-shadow:
     0 0 5px 2px #ffffff,
     0 0 10px 4px #65d8ff,
     0 0 20px 7px #168bff,
     0 0 34px 10px rgba(0, 123, 255, 0.65);
 
-  offset-path: inset(0 round 0);
-  offset-distance: 0%;
-
-  /* 15 seconds = 3x na mas mabagal mula sa 5 seconds */
-  animation: edge-light-run 50s linear infinite;
-}
-
-/* Asul na trail na kusang nawawala */
-.screen-edge-glow::after {
-  content: "";
-  position: absolute;
-  inset: 0;
+  will-change: transform;
   pointer-events: none;
-  opacity: 0;
-  background: transparent;
-  animation: edge-trail-fade 1.8s ease-out infinite;
-}
-
-@keyframes edge-light-run {
-  from {
-    offset-distance: 0%;
-  }
-  to {
-    offset-distance: 100%;
-  }
-}
-
-@keyframes edge-trail-fade {
-  0%, 100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.15;
-  }
 }
 
 body.light-mode .screen-edge-glow {
@@ -376,7 +347,9 @@ body.light-mode .screen-edge-glow {
   justify-content:center;
   padding:20px;
   background:#020b18bb;
-  backdrop-filter:blur(7px);
+
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
 }
 
 .exit-modal.hidden{
@@ -421,7 +394,7 @@ body.light-mode .exit-card p{
   color:#66829d;
 }
 
-/* CUSTOM APP DIALOG */
+
 .app-dialog-overlay {
   position: fixed;
   inset: 0;
@@ -431,13 +404,15 @@ body.light-mode .exit-card p{
   justify-content: center;
   padding: 18px;
   background: #020b18bb;
-  backdrop-filter: blur(7px);
+
+  -webkit-backdrop-filter:none !important;
+  backdrop-filter:none !important;
 }
 
 .app-dialog-overlay.hidden {
   display: none !important;
 }
-
+  
 .app-dialog {
   width: 100%;
   max-width: 360px;
@@ -522,91 +497,114 @@ body.light-mode .app-dialog-ok {
   color: #fff;
 }
  
-.answer-confirm-overlay {
-  position: fixed;
+.container {
+  position: relative;
+}
+
+.answer-confirm-screen {
+  position: absolute;
   inset: 0;
-  z-index: 99999;
-  background: rgba(0,0,0,.78);
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(6, 17, 38, 0.88);
 }
+
+.answer-confirm-screen.hidden {
+  display: none !important;
+}
+
+
 
 .answer-confirm-box {
   width: 100%;
-  max-width: 440px;
-  max-height: 85vh;
-  overflow: hidden;
-  background: #17243a;
-  color: white;
-  border: 1px solid #42618b;
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+  max-width: 420px;
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+  padding: 22px;
+  box-sizing: border-box;
+  border: 1px solid #367db7;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #10294b, #07162d);
+  color: #edf7ff;
+  box-shadow: 0 18px 60px #0008;
 }
 
 .answer-confirm-title {
-  font-size: 21px;
+  font-size: 19px;
   font-weight: bold;
-  text-align: center;
+  color: #d8efff;
   margin-bottom: 10px;
 }
 
 .answer-confirm-message {
-  text-align: center;
-  margin-bottom: 15px;
+  color: #b9d9f6;
+  margin-bottom: 16px;
 }
 
 .answer-confirm-section {
-  border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
   margin-bottom: 12px;
-}
-
-.answer-confirm-question {
-  background: #203957;
-  border: 1px solid #426b96;
-}
-
-.answer-confirm-answer {
-  background: #253d32;
-  border: 1px solid #477c5c;
+  border: 1px solid #24486f;
+  border-radius: 12px;
+  background: #071a33;
 }
 
 .answer-confirm-label {
-  font-size: 13px;
   font-weight: bold;
-  margin-bottom: 9px;
-}
-
-.answer-confirm-question .answer-confirm-label {
-  color: #80c5ff;
-}
-
-.answer-confirm-answer .answer-confirm-label {
-  color: #8de6ad;
+  color: #70c9ff;
+  margin-bottom: 8px;
 }
 
 .answer-confirm-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  max-height: 30vh;
-  overflow-y: auto;
-  font-size: 16px;
   line-height: 1.6;
 }
 
 .answer-confirm-buttons {
   display: flex;
   gap: 10px;
+  margin-top: 16px;
 }
 
 .answer-confirm-buttons button {
   flex: 1;
-  min-height: 46px;
-  font-size: 16px;
-  font-weight: bold;
+  min-height: 44px;
+}
+
+
+
+body.light-mode .answer-confirm-screen {
+  background: rgba(230, 243, 255, 0.88);
+}
+
+body.light-mode .answer-confirm-box {
+  background: linear-gradient(145deg, #fff, #eaf5ff);
+  color: #163653;
+  border-color: #b9dcf5;
+}
+
+body.light-mode .answer-confirm-title {
+  color: #163f69;
+}
+
+body.light-mode .answer-confirm-message {
+  color: #66829d;
+}
+
+body.light-mode .answer-confirm-section {
+  background: #f1f8ff;
+  border-color: #b9dcf5;
+}
+
+body.light-mode .answer-confirm-text {
+  color: #163653;
 }
 </style>
 </head>
@@ -685,6 +683,30 @@ body.light-mode .app-dialog-ok {
 <button class="secondary" onclick="restartGame()">🔄 RESTART</button>
 </div>
 </section>
+  
+<div id="answerConfirmScreen" class="answer-confirm-screen hidden">
+  <div class="answer-confirm-box">
+    <div class="answer-confirm-title">ARE YOU SURE?</div>
+    <div class="answer-confirm-message">
+      Review your answer before checking.
+    </div>
+
+    <div class="answer-confirm-section answer-confirm-question">
+      <div class="answer-confirm-label">📘 QUESTION</div>
+      <div id="confirmQuestion" class="answer-confirm-text"></div>
+    </div>
+
+    <div class="answer-confirm-section answer-confirm-answer">
+      <div class="answer-confirm-label">✍️ YOUR ANSWER</div>
+      <div id="confirmAnswer" class="answer-confirm-text"></div>
+    </div>
+
+    <div class="answer-confirm-buttons">
+      <button type="button" class="secondary" id="confirmNo">NO</button>
+      <button type="button" class="main" id="confirmYes">YES</button>
+    </div>
+  </div>
+</div>
 
 <section id="historyPanel" class="hidden">
 <div class="panel">
@@ -1002,71 +1024,25 @@ function showQuestion(message="",resetTimer=true){
 }
 function confirmAnswerPreview(question, answer) {
   return new Promise(resolve => {
-    const overlay = document.createElement("div");
-    overlay.className = "answer-confirm-overlay";
+    const screen = document.getElementById("answerConfirmScreen");
 
-    const box = document.createElement("div");
-    box.className = "answer-confirm-box";
+    document.getElementById("confirmQuestion").textContent = question;
+    document.getElementById("confirmAnswer").textContent = answer;
 
-    const title = document.createElement("div");
-    title.className = "answer-confirm-title";
-    title.textContent = "ARE YOU SURE?";
-
-    const message = document.createElement("div");
-    message.className = "answer-confirm-message";
-    message.textContent = "Review your answer before checking.";
-
-    function makeSection(labelText, content, type) {
-      const section = document.createElement("div");
-      section.className = "answer-confirm-section " + type;
-
-      const label = document.createElement("div");
-      label.className = "answer-confirm-label";
-      label.textContent = labelText;
-
-      const text = document.createElement("div");
-      text.className = "answer-confirm-text";
-      text.textContent = content;
-
-      section.append(label, text);
-      return section;
-    }
-
-    const questionBox = makeSection(
-      "📘 QUESTION",
-      question,
-      "answer-confirm-question"
-    );
-
-    const answerBox = makeSection(
-      "✍️ YOUR ANSWER",
-      answer,
-      "answer-confirm-answer"
-    );
-
-    const buttons = document.createElement("div");
-    buttons.className = "answer-confirm-buttons";
-
-    const yes = document.createElement("button");
-    yes.className = "main";
-    yes.textContent = "YES";
-
-    const no = document.createElement("button");
-    no.className = "secondary";
-    no.textContent = "NO";
+    const yes = document.getElementById("confirmYes");
+    const no = document.getElementById("confirmNo");
 
     function close(result) {
-      overlay.remove();
+      screen.classList.add("hidden");
+      yes.onclick = null;
+      no.onclick = null;
       resolve(result);
     }
 
     yes.onclick = () => close(true);
     no.onclick = () => close(false);
 
-    buttons.append(yes, no);
-    box.append(title, message, questionBox, answerBox, buttons);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
+    screen.classList.remove("hidden");
   });
 }
 async function checkAnswer(){
@@ -1231,6 +1207,73 @@ function navigateTo(tab){
   showTab(tab);
 }
 
+(function () {
+  const frame = document.querySelector(".screen-edge-glow");
+  if (!frame) return;
+
+  const runner = document.createElement("span");
+  runner.className = "edge-runner";
+  frame.appendChild(runner);
+
+  const duration = 50000;
+  let startTime = null;
+  let width = 0;
+  let height = 0;
+
+  function measure() {
+    const rect = frame.getBoundingClientRect();
+    width = Math.max(0, rect.width - 8);
+    height = Math.max(0, rect.height - 8);
+  }
+
+  measure();
+
+  window.addEventListener("resize", measure, { passive: true });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener(
+      "resize",
+      measure,
+      { passive: true }
+    );
+  }
+
+  function animate(time) {
+    if (startTime === null) startTime = time;
+
+    const progress = ((time - startTime) % duration) / duration;
+
+    const w = width;
+    const h = height;
+    const perimeter = 2 * (w + h);
+
+    let distance = progress * perimeter;
+    let x, y;
+
+    if (distance <= w) {
+      x = distance;
+      y = 0;
+    } else if ((distance -= w) <= h) {
+      x = w;
+      y = distance;
+    } else if ((distance -= h) <= w) {
+      x = w - distance;
+      y = h;
+    } else {
+      distance -= w;
+      x = 0;
+      y = h - distance;
+    }
+
+    runner.style.transform =
+      `translate3d(${x + 4}px, ${y + 4}px, 0) translate(-50%, -50%)`;
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+})();
+  
 function showTab(tab){
   const screens = [
     "home","play","history","questions","sets","backup"
