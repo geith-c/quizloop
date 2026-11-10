@@ -848,6 +848,26 @@ body.light-mode .answer-confirm-text {
 .play-set-footer button {
   width: 100%;
 }
+
+.sets-list-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sets-list-fixed {
+  flex-shrink: 0;
+}
+
+.sets-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
 </style>
 </head>
 <body>
@@ -1285,11 +1305,14 @@ What is the next question?
 
 
   <div id="setListScreen" class="sets-screen hidden">
-    <div class="panel sets-list-panel">
+  <div class="panel sets-list-panel">
+
+    <div class="sets-list-fixed">
 
       <div class="row sets-heading">
         <h2>📂 My Question Sets</h2>
-        <button class="secondary" type="button" onclick="showSetCreateScreen()">
+        <button class="secondary" type="button"
+          onclick="showSetCreateScreen()">
           ➕ Create Set
         </button>
       </div>
@@ -1298,10 +1321,12 @@ What is the next question?
         Open a set to preview the questions inside it.
       </p>
 
-      <div id="setList"></div>
-
     </div>
+
+    <div id="setList" class="sets-list-scroll"></div>
+
   </div>
+</div>
 
 </section>
 
