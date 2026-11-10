@@ -2034,6 +2034,7 @@ function renderSetPicker() {
 }
 function setAllChecks(checked){document.querySelectorAll(".set-question-check").forEach(cb=>cb.checked=checked);updatePickedCount();}
 function updatePickedCount(){const count=document.querySelectorAll(".set-question-check:checked").length,label=document.getElementById("pickedCount");if(label)label.textContent=count+" questions selected";}
+
 function saveSet() {
   const name = document.getElementById("setNameInput").value.trim();
 
@@ -2070,15 +2071,16 @@ function saveSet() {
 
   cancelSetEdit();
 
-  // Clear the previous selections for the next new set
   document.getElementById("setQuestionPicker").replaceChildren();
   renderSetPicker();
 
   renderSets();
   renderSetSelect();
 
-  showMySetsScreen();
+  document.getElementById("setCreateScreen").classList.remove("hidden");
+  document.getElementById("setListScreen").classList.add("hidden");
 }
+
 function cancelSetEdit(){editingSetId=null;document.getElementById("setNameInput").value="";document.getElementById("saveSetBtn").textContent="➕ Create Set";document.getElementById("cancelSetBtn").classList.add("hidden");renderSetPicker();}
 function editSet(id) {
   const set = sets.find(s => s.id === id);
