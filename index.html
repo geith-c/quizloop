@@ -77,6 +77,9 @@ textarea{resize:vertical;line-height:1.55}
 .timer-row input[type="checkbox"]{width:16px;height:16px;margin:0;padding:0;flex:0 0 16px;accent-color:var(--blue)}
 .timer-duration{display:flex;flex-direction:column;align-items:center;gap:5px;flex:0 0 auto}
 .timer-sound-buttons{display:flex;justify-content:center;gap:5px}
+.mode-sound-button{display:block;width:100%;max-width:360px;margin:8px auto 3px;padding:12px 14px;border-radius:12px;font-size:16px;font-weight:800;letter-spacing:.01em;background:linear-gradient(135deg,#174b82,#126fc0);border:1px solid #58baff;color:#fff;box-shadow:0 5px 16px #168bff25}
+.mode-sound-button:active{transform:scale(.985)}
+.mode-sound-hint{text-align:center;font-size:10px;font-weight:800;letter-spacing:.12em;color:#9fcfff;margin:0 auto 12px}
 .sound-btn{width:28px;height:25px;min-width:28px;padding:2px;border-radius:7px;color:white;font-size:11px;line-height:1;flex:0 0 28px}
 .sound-btn.on{background:#1678ef;border-color:#62c2ff;color:white;box-shadow:0 0 14px #258bff38}
 .sound-btn.off{background:#071226;border-color:#345071;color:#8da7c7}
@@ -868,6 +871,43 @@ body.light-mode .answer-confirm-text {
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
+
+
+/* Timed Quiz settings popup */
+.timed-quiz-overlay{position:fixed;inset:0;z-index:1000001;display:flex;align-items:center;justify-content:center;padding:16px;background:#020b18cc;}
+.timed-quiz-overlay.hidden{display:none!important}
+.timed-quiz-card{width:100%;max-width:440px;max-height:90dvh;overflow:auto;padding:20px;border:1px solid #367db7;border-radius:18px;background:linear-gradient(145deg,#10294b,#07162d);color:#edf7ff;box-shadow:0 18px 60px #0009}
+.timed-quiz-card h2{margin-top:0}
+.timed-setting{margin:12px 0}
+.timed-setting label{margin:0 0 6px;line-height:1.4}
+.timed-setting input{font-size:17px;padding:10px}
+.timed-quiz-actions{display:flex;gap:9px;margin-top:18px}
+.timed-quiz-actions button{flex:1}
+body.light-mode .timed-quiz-card{background:linear-gradient(145deg,#fff,#eaf5ff);color:#163653;border-color:#b9dcf5}
+body.light-mode .timed-quiz-card h2{color:#163f69}
+/* Presentation Mode */
+.presentation-panel{max-width:920px;margin:0 auto}
+.presentation-controls{display:grid;grid-template-columns:1fr;gap:10px}
+.presentation-controls label{margin-top:4px}
+.presentation-controls select,.presentation-controls input{font-size:16px;padding:12px}
+.presentation-stage{min-height:55vh;display:flex;flex-direction:column;justify-content:center;gap:18px;padding:clamp(18px,4vw,34px);border:1px solid #2b5684;border-radius:18px;background:radial-gradient(ellipse at 50% 0%,#153e72 0,transparent 65%),linear-gradient(150deg,#0c2242,#07162d);box-shadow:0 12px 36px #0004}
+.presentation-kicker{text-align:center;color:#78c5ff;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
+.presentation-question{font-size:clamp(25px,5vw,42px);line-height:1.45;font-weight:800;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere;color:#f0f9ff}
+.presentation-answer{font-size:clamp(19px,3.8vw,29px);line-height:1.6;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;color:#e8f7ff;border-top:1px solid #31577e;padding-top:18px}
+.presentation-timer{font-size:clamp(34px,8vw,54px);font-weight:900;text-align:center;color:#65bdff;font-variant-numeric:tabular-nums;text-shadow:0 0 22px #258bff55}
+.presentation-progress{height:7px;background:#203b5c;border-radius:99px;overflow:hidden}
+.presentation-progress>span{display:block;height:100%;width:100%;background:linear-gradient(90deg,#258bff,#8de0ff);transform-origin:left center}
+.presentation-meta{text-align:center;color:#9db8d8;font-size:12px}
+body.light-mode .presentation-stage{background:linear-gradient(150deg,#f3faff,#e6f3ff);border-color:#b9dcf5}
+body.light-mode .presentation-question{color:#163f69}
+body.light-mode .presentation-answer{color:#163653;border-color:#c5e2f8}
+body.light-mode .presentation-timer{color:#258bff;text-shadow:none}
+body.light-mode .presentation-progress{background:#d4e8f8}
+body.light-mode .presentation-meta{color:#66829d}
+
+.mode-sound-label{display:block;font-weight:700;margin:8px 0 6px;color:inherit}
+.mode-sound-label span{font-weight:400;font-size:.9em;opacity:.8}
+.mode-sound-select{display:block;width:100%;max-width:340px;min-height:42px;padding:8px 12px;border-radius:10px;border:1px solid #718096;background:#fff;color:#172033;font-size:16px;font-weight:600;margin:0 0 12px}
 </style>
 </head>
 <body>
@@ -893,6 +933,7 @@ body.light-mode .answer-confirm-text {
 <p class="small">Choose where you want to go. Your questions and progress are saved automatically on this device.</p>
 <div class="home-grid">
 <button class="menu-card" onclick="navigateTo('play')"><span class="menu-icon">🎮</span><strong>Quiz</strong><small>Practice and test your recall</small></button>
+<button class="menu-card" onclick="navigateTo('presentation')"><span class="menu-icon">🎬</span><strong>Presentation Mode</strong><small>Automatic question reading and answer recall</small></button>
 <button class="menu-card" onclick="navigateTo('history')"><span class="menu-icon">📜</span><strong>Saved History</strong><small>Review past quiz results</small></button>
 <button class="menu-card" onclick="navigateTo('questions')"><span class="menu-icon">❓</span><strong>Questions</strong><small>Add and manage questions</small></button>
 <button class="menu-card" onclick="navigateTo('sets')"><span class="menu-icon">🗂️</span><strong>Question Sets</strong><small>Organize questions into sets</small></button>
@@ -909,6 +950,10 @@ body.light-mode .answer-confirm-text {
   <div class="play-set-fixed">
     <h2>📚 Select a Question Set</h2>
     <p class="small">Choose which questions you want to practice.</p>
+    <label class="pick" style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:12px">
+      <input id="timedQuizToggle" type="checkbox" onchange="toggleTimedQuizOption(this.checked)">
+      <span><strong>Enable Timed Quiz</strong><br><small>Turn on the reading, thinking, and answer-display timers.</small></span>
+    </label>
   </div>
 
   <div class="play-set-scroll">
@@ -974,25 +1019,19 @@ body.light-mode .answer-confirm-text {
         <div class="timer-row">
 
           <input id="timerEnabled" type="checkbox"
-            checked aria-label="Enable timer">
+            class="hidden" aria-label="Enable timer">
 
           <div class="timer-duration">
 
-            <div class="timer-sound-buttons">
-              <button type="button" id="pianoButton"
-                class="sound-btn on"
-                onclick="togglePiano()"
-                aria-label="Toggle piano"
-                aria-pressed="true">P</button>
+            <label class="mode-sound-label" for="quizSoundSelect">Timer sound:</label>
+            <select id="quizSoundSelect" class="mode-sound-select" aria-label="Quiz Mode timer sound">
+              <option value="default">🔈 Default</option>
+              <option value="piano">🎹 Piano</option>
+              <option value="violin">🎻 Violin</option>
+              <option value="both">🎹 Piano + 🎻 Violin</option>
+            </select>
 
-              <button type="button" id="violinButton"
-                class="sound-btn off"
-                onclick="toggleViolin()"
-                aria-label="Toggle violin"
-                aria-pressed="false">V</button>
-            </div>
-
-            <div class="timer-input-row">
+            <div class="timer-input-row hidden">
               <input id="timerSeconds" type="number"
                 min="1" max="3600" value="30"
                 aria-label="Timer duration in seconds">
@@ -1080,6 +1119,53 @@ body.light-mode .answer-confirm-text {
     </div>
   </div>
 </div>
+
+<section id="presentationPanel" class="hidden">
+  <div class="panel presentation-panel" id="presentationSetup">
+    <h2>🎬 Presentation Mode</h2>
+    <p class="small">Choose a Question Set. Each question is shown twice before recall time begins. The question stays visible until its answer is revealed.</p>
+    <label class="mode-sound-label" for="presentationSoundSelect">Timer sound:</label>
+    <select id="presentationSoundSelect" class="mode-sound-select" aria-label="Presentation Mode timer sound">
+      <option value="default">🔈 Default</option>
+      <option value="piano">🎹 Piano</option>
+      <option value="violin">🎻 Violin</option>
+      <option value="both">🎹 Piano + 🎻 Violin</option>
+    </select>
+    <div class="presentation-controls">
+      <label for="presentationSetSelect">Question Set</label>
+      <select id="presentationSetSelect"></select>
+      <label for="presentationReadBase">Minimum reading time per display (seconds)</label>
+      <input id="presentationReadBase" type="number" min="3" max="60" value="8">
+      <label for="presentationReadPerWord">Additional reading time per question word (seconds)</label>
+      <input id="presentationReadPerWord" type="number" min="0" max="5" step="0.1" value="0.5">
+      <label for="presentationSecondsPerWord">Answer thinking time per answer word (seconds)</label>
+      <input id="presentationSecondsPerWord" type="number" min="1" max="20" value="5">
+      <label for="presentationRevealSeconds">Answer display time (seconds)</label>
+      <input id="presentationRevealSeconds" type="number" min="5" max="60" value="12">
+    </div>
+    <p class="small" id="presentationSetInfo"></p>
+    <button class="main" id="presentationStartBtn" type="button" onclick="startPresentation()" style="width:100%;margin-top:12px">▶ START PRESENTATION</button>
+  </div>
+
+  <div id="presentationRun" class="hidden">
+    <div class="info">
+      <span id="presentationQuestionCount">Question 1/1</span>
+      <span id="presentationPhaseLabel">READING 1 / 2</span>
+    </div>
+    <div class="presentation-stage">
+      <div class="presentation-kicker" id="presentationKicker">QUESTION · FIRST READING</div>
+      <div class="presentation-question" id="presentationQuestion"></div>
+      <div class="presentation-answer hidden" id="presentationAnswer"></div>
+      <div class="presentation-timer" id="presentationTimer">00:08</div>
+      <div class="presentation-progress"><span id="presentationProgressBar"></span></div>
+      <div class="presentation-meta" id="presentationMeta">Read the question carefully</div>
+    </div>
+    <div class="row">
+      <button class="secondary" id="presentationPauseBtn" type="button" onclick="togglePresentationPause()">⏸ PAUSE</button>
+      <button class="danger" type="button" onclick="stopPresentation(true)">✕ END PRESENTATION</button>
+    </div>
+  </div>
+</section>
 
 <section id="historyPanel" class="hidden">
 <div class="panel">
@@ -1418,6 +1504,56 @@ quizHistory=loadQuizHistory();
 const starterQuestions=[{id:"q_starter",question:"Ano ang paksa ng unang linggo ng Pebrero 2026?",answers:["ANG KABUTIHAN SA KAPATID NA MAY PINAGSISIKAPANG MARATING (GOAL) NA KAUNLARAN NG BUHAY SA PANGINOON AYON SA BIBLIA"]}];
 let questions=[],sets=[],editingQuestionId=null,editingSetId=null,selectedSetId="all",order=[],current=0,score=0,round=1,answered=false,ramble=true,attempts=[];
 let timerInterval=null,timerRemaining=30,audioContext=null,activeTab="home";
+let timedQuizEnabled=false,timedQuizPhase="idle",timedQuizDuration=0,timedQuizRemaining=0,timedQuizSettings={readBase:8,readPerWord:0.5,thinkPerWord:5,answerDisplay:12};
+const MODE_SOUND_KEY="ramble_quiz_mode_sound_v1";
+let modeSoundChoices={quiz:"default",presentation:"default"};
+let defaultSoundSelection={piano:true,violin:false};
+function soundModeLabel(mode){
+  if(mode==="piano")return "🎹piano";
+  if(mode==="violin")return "🎻violin";
+  if(mode==="both")return "🎹piano & 🎻violin";
+  return "🔈default";
+}
+function updateModeSoundButton(mode){
+  const select=document.getElementById(mode==="presentation"?"presentationSoundSelect":"quizSoundSelect");
+  if(select)select.value=modeSoundChoices[mode]||"default";
+}
+function applyModeSound(mode){
+  const choice=modeSoundChoices[mode]||"default";
+  const selection=choice==="default"?defaultSoundSelection:{piano:choice==="piano"||choice==="both",violin:choice==="violin"||choice==="both"};
+  document.getElementById("organEnabled").checked=!!selection.piano;
+  document.getElementById("violinEnabled").checked=!!selection.violin;
+  updateSoundButtons();
+  saveTimerSettings();
+  updateModeSoundButton(mode);
+}
+function handleModeSoundChange(mode){
+  if(mode!=="quiz"&&mode!=="presentation")return;
+  const select=document.getElementById(mode==="presentation"?"presentationSoundSelect":"quizSoundSelect");
+  if(!select)return;
+  const selected=select.value;
+  if(!["default","piano","violin","both"].includes(selected))return;
+  modeSoundChoices[mode]=selected;
+  try{localStorage.setItem(MODE_SOUND_KEY,JSON.stringify(modeSoundChoices));}catch(e){console.warn("Unable to save mode sound choices:",e);}
+  // Apply the sound immediately only when this mode is currently active.
+  if((mode==="presentation"&&activeTab==="presentation")||(mode==="quiz"&&activeTab==="play")){
+    const selection=selected==="default"?defaultSoundSelection:{piano:selected==="piano"||selected==="both",violin:selected==="violin"||selected==="both"};
+    document.getElementById("organEnabled").checked=!!selection.piano;
+    document.getElementById("violinEnabled").checked=!!selection.violin;
+    updateSoundButtons();
+    try{saveTimerSettings();}catch(e){console.warn("Unable to save selected sound:",e);}
+  }
+  // Preview the chosen sound.
+  if(selected==="piano")playOrganNote(880,.3);
+  else if(selected==="violin")playViolinNote(880,.35);
+  else if(selected==="both"){playOrganNote(880,.3);playViolinNote(880,.35);}
+}
+function loadModeSoundChoices(){
+  try{const saved=JSON.parse(localStorage.getItem(MODE_SOUND_KEY)||"null");if(saved&&typeof saved==="object"){for(const mode of ["quiz","presentation"]){if(["default","piano","violin","both"].includes(saved[mode]))modeSoundChoices[mode]=saved[mode];}}}catch(e){console.warn("Mode sound settings error:",e);}
+  // The original Presentation Mode default sound is Piano; keep it stable even after another mode is customized.
+  defaultSoundSelection={piano:true,violin:false};
+  updateModeSoundButton("quiz");updateModeSoundButton("presentation");
+}
 
 function loadTimerSettings(){
   try{const saved=JSON.parse(localStorage.getItem(TIMER_SETTINGS_KEY));if(saved&&typeof saved==="object"){
@@ -1430,8 +1566,8 @@ function loadTimerSettings(){
 function updateSoundButtons(){
   const pianoOn=document.getElementById("organEnabled").checked,violinOn=document.getElementById("violinEnabled").checked;
   const pianoButton=document.getElementById("pianoButton"),violinButton=document.getElementById("violinButton");
-  pianoButton.classList.toggle("on",pianoOn);pianoButton.classList.toggle("off",!pianoOn);pianoButton.setAttribute("aria-pressed",String(pianoOn));
-  violinButton.classList.toggle("on",violinOn);violinButton.classList.toggle("off",!violinOn);violinButton.setAttribute("aria-pressed",String(violinOn));
+  if(pianoButton){pianoButton.classList.toggle("on",pianoOn);pianoButton.classList.toggle("off",!pianoOn);pianoButton.setAttribute("aria-pressed",String(pianoOn));}
+  if(violinButton){violinButton.classList.toggle("on",violinOn);violinButton.classList.toggle("off",!violinOn);violinButton.setAttribute("aria-pressed",String(violinOn));}
 }
 function saveTimerSettings(){
   const input=document.getElementById("timerSeconds");let seconds=Number(input.value);
@@ -1463,9 +1599,30 @@ function testOrgan(){const ctx=getAudioContext();if(!ctx){alert("Your browser do
 function playTimeoutOrgan(){[880,784,659,523,392].forEach((frequency,index)=>setTimeout(()=>playOrganNote(frequency,.55),index*.42*1000));}
 function playTimeoutViolin(){[1760,1568,1318,1046,784].forEach((frequency,index)=>setTimeout(()=>playViolinNote(frequency,.55),index*.42*1000));}
 function stopQuestionTimer(){if(timerInterval!==null){clearInterval(timerInterval);timerInterval=null;}}
-document.addEventListener("visibilitychange",function(){if(document.hidden){saveQuizSession();stopQuestionTimer();document.getElementById("timerStatus").textContent="⏸ Timer paused — app is in the background.";}else if(activeTab==="play"&&ramble&&!answered&&order.length>0){startQuestionTimer(false);}});
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden){
+    saveQuizSession();stopQuestionTimer();
+    if(activeTab==="presentation"&&presentationPhase!=="idle"){
+      presentationWasRunningBeforeHide=!presentationPaused;
+      stopPresentationTimer();
+    }
+    document.getElementById("timerStatus").textContent="⏸ Timer paused — app is in the background.";
+  }else{
+    if(activeTab==="play"&&ramble&&!answered&&order.length>0){if(timedQuizEnabled&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));else startQuestionTimer(false);}
+    if(activeTab==="presentation"&&presentationPhase!=="idle"&&presentationWasRunningBeforeHide&&!presentationPaused){
+      presentationWasRunningBeforeHide=false;
+      presentationInterval=setInterval(()=>{
+        if(presentationPaused||document.hidden)return;
+        presentationRemaining=Math.max(0,presentationRemaining-1);
+        updatePresentationDisplay();
+        if(presentationRemaining<=0){stopPresentationTimer();advancePresentationPhase();}
+      },1000);
+    }
+  }
+});
 window.addEventListener("pagehide",function(){saveQuizSession();stopQuestionTimer();});
 function startQuestionTimer(reset=true){
+  if(timedQuizEnabled){startTimedQuizQuestion();return;}
   stopQuestionTimer();if(reset)timerRemaining=saveTimerSettings();updateTimerDisplay();const enabled=document.getElementById("timerEnabled").checked,status=document.getElementById("timerStatus");
   if(!enabled){status.textContent="Timer is turned off.";return;}
   if(document.hidden||(typeof activeTab!=="undefined"&&activeTab!=="play")||!ramble||answered||current>=order.length){status.textContent="⏸ Timer paused.";return;}
@@ -1476,6 +1633,57 @@ function startQuestionTimer(reset=true){
     if(timerRemaining<=0){stopQuestionTimer();handleTimeout();}
   },1000);
 }
+function timedNumber(id,fallback,min,max){const v=Number(document.getElementById(id).value);return Math.min(max,Math.max(min,Number.isFinite(v)?v:fallback));}
+function readTimedQuizSettings(){timedQuizSettings={readBase:timedNumber('quizReadBase',8,1,120),readPerWord:timedNumber('quizReadPerWord',.5,0,10),thinkPerWord:timedNumber('quizThinkPerWord',5,.1,30),answerDisplay:timedNumber('quizAnswerDisplay',12,1,300)};return timedQuizSettings;}
+function toggleTimedQuizOption(enabled){timedQuizEnabled=!!enabled;document.getElementById('timerEnabled').checked=timedQuizEnabled;saveTimerSettings();}
+function closeTimedQuizSettings(){document.getElementById('timedQuizSettingsModal').classList.add('hidden');}
+function beginTimedQuiz(){readTimedQuizSettings();closeTimedQuizSettings();timedQuizEnabled=true;document.getElementById('timerEnabled').checked=true;saveTimerSettings();launchQuizScreen();}
+function startTimedQuizQuestion(){
+  stopQuestionTimer();if(!timedQuizEnabled||answered||!ramble||document.hidden||activeTab!=='play'||document.getElementById('playQuizScreen').classList.contains('hidden'))return;
+  const q=currentQuestion();if(!q)return;
+  const words= presentationWordCount(q.question);
+  const seconds=Math.max(1,Math.ceil(timedQuizSettings.readBase+Math.max(0,words-1)*timedQuizSettings.readPerWord));
+  runTimedQuizPhase('read1',seconds);
+}
+function runTimedQuizPhase(phase,duration){
+  stopQuestionTimer();timedQuizPhase=phase;timedQuizDuration=Math.max(1,Math.ceil(duration));timedQuizRemaining=timedQuizDuration;
+  const check=document.getElementById('checkBtn'),answer=document.getElementById('answer');
+  check.disabled=(phase==='read1'||phase==='read2'||phase==='reveal');
+  answer.disabled=(phase==='reveal');
+  updateTimedQuizDisplay();
+  if(document.hidden||activeTab!=='play'||!ramble)return;
+  timerInterval=setInterval(()=>{
+    if(document.hidden||activeTab!=='play'||!ramble){stopQuestionTimer();return;}
+    timedQuizRemaining=Math.max(0,timedQuizRemaining-1);updateTimedQuizDisplay();
+    if(phase==='think'&&timedQuizRemaining>0){const f=440+440*(timedQuizRemaining/Math.max(1,timedQuizDuration));if(document.getElementById('organEnabled').checked)playOrganNote(f,.22);if(document.getElementById('violinEnabled').checked)playViolinNote(f,.28);}
+    if(timedQuizRemaining<=0){stopQuestionTimer();advanceTimedQuizPhase();}
+  },1000);
+}
+function updateTimedQuizDisplay(){
+  const value=document.getElementById('timerValue'),status=document.getElementById('timerStatus');
+  value.textContent=formatTime(timedQuizRemaining);value.style.color=timedQuizRemaining<=5?'#ff7189':'#54b7ff';
+  const labels={read1:'📖 First reading',read2:'📖 Second reading',think:'✍️ Answer now',reveal:'📚 Correct answers'};
+  status.textContent=labels[timedQuizPhase]||'Timed Quiz';
+}
+function advanceTimedQuizPhase(){
+  const q=currentQuestion();if(!q||answered)return;
+  if(timedQuizPhase==='read1'){
+    const words=presentationWordCount(q.question);runTimedQuizPhase('read2',Math.max(1,Math.ceil(timedQuizSettings.readBase+Math.max(0,words-1)*timedQuizSettings.readPerWord)));
+  }else if(timedQuizPhase==='read2'){
+    const answerWords=q.answers.reduce((sum,a)=>sum+presentationWordCount(a),0);runTimedQuizPhase('think',Math.max(1,Math.ceil(answerWords*timedQuizSettings.thinkPerWord)));
+  }else if(timedQuizPhase==='think'){
+    if(document.getElementById('organEnabled').checked)playTimeoutOrgan();if(document.getElementById('violinEnabled').checked)playTimeoutViolin();
+    checkAnswer(true);
+  }else if(timedQuizPhase==='reveal'){
+    timedQuizPhase='idle';nextQuestion();
+  }
+}
+function startTimedAnswerReveal(){
+  document.getElementById('checkBtn').classList.add('hidden');document.getElementById('nextBtn').classList.add('hidden');
+  document.getElementById('answer').disabled=true;
+  runTimedQuizPhase('reveal',timedQuizSettings.answerDisplay);
+}
+
 function handleTimeout(){
   if(answered)return;const q=currentQuestion();if(!q)return;const input=document.getElementById("answer").value.trim();
   if(input){checkAnswer();const feedback=document.getElementById("feedback"),notice=document.createElement("p");notice.className="amber";notice.style.fontWeight="bold";notice.textContent="⏰ TIME'S UP! Your answer has been checked.";feedback.prepend(notice);document.getElementById("timerStatus").textContent="Time is up. Press NEXT QUESTION to continue.";playTimeoutOrgan();playTimeoutViolin();return;}
@@ -1532,9 +1740,12 @@ function restoreQuizSession(){
     if(!s.answered)document.getElementById("answer").value=typeof s.answerText==="string"?s.answerText:"";return true;
   }catch(error){console.warn("Unable to restore quiz session:",error);return false;}
 }
-loadTimerSettings();updateSoundButtons();
+loadTimerSettings();updateSoundButtons();loadModeSoundChoices();
+// Each mode has its own sound selector and saved selection.
+document.getElementById("quizSoundSelect").addEventListener("change",function(){handleModeSoundChange("quiz");});
+document.getElementById("presentationSoundSelect").addEventListener("change",function(){handleModeSoundChange("presentation");});
 document.getElementById("timerSeconds").addEventListener("change",saveTimerSettings);
-document.getElementById("timerEnabled").addEventListener("change",function(){saveTimerSettings();if(!answered&&current<order.length)showQuestion();});
+document.getElementById("timerEnabled").addEventListener("change",function(){saveTimerSettings();});
 document.getElementById("organEnabled").addEventListener("change",function(){saveTimerSettings();updateSoundButtons();});
 document.getElementById("violinEnabled").addEventListener("change",function(){saveTimerSettings();updateSoundButtons();});
 function renderSetSelect(){
@@ -1563,7 +1774,7 @@ function updateStartQuizButton() {
 function selectSet(id){selectedSetId=id;document.getElementById("setDropdownList").classList.add("hidden");document.getElementById("setDropdownButton").setAttribute("aria-expanded","false");renderSetSelect();restartGame("reset");updateStartQuizButton();}
 function showQuestion(message="",resetTimer=true){
   const qbox=document.getElementById("question"),answerBox=document.getElementById("answer");document.getElementById("feedback").replaceChildren();document.getElementById("result").classList.add("hidden");document.getElementById("game").classList.remove("hidden");
-  if(order.length===0){qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";answerBox.value="";answerBox.disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");document.getElementById("progress").textContent="Question: 0/0";document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;stopQuestionTimer();timerRemaining=saveTimerSettings();updateTimerDisplay();return;}
+  if(order.length===0){qbox.textContent="There are no questions in the selected set. Add questions or choose another set.";answerBox.value="";answerBox.disabled=true;document.getElementById("checkBtn").classList.add("hidden");document.getElementById("nextBtn").classList.add("hidden");document.getElementById("progress").textContent="Question: 0/0";document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;stopQuestionTimer();if(!timedQuizEnabled)timerRemaining=saveTimerSettings();updateTimerDisplay();return;}
   if(current>=order.length){if(saveCompletedQuiz())finishRound();return;}
   answered=false;const q=currentQuestion();if(!q){restartGame();return;}qbox.textContent=(current+1)+". "+q.question;document.getElementById("progress").textContent="Question: "+(current+1)+"/"+order.length;document.getElementById("score").textContent="Correct Answers: "+score;document.getElementById("round").textContent="Round "+round;answerBox.value="";answerBox.disabled=false;document.getElementById("checkBtn").classList.remove("hidden");document.getElementById("nextBtn").classList.add("hidden");startQuestionTimer(resetTimer);saveQuizSession();
   if(message){const note=document.createElement("div");note.className="green";note.textContent=message;document.getElementById("feedback").appendChild(note);}
@@ -1592,8 +1803,9 @@ function confirmAnswerPreview(question, answer) {
   });
 }
 
-async function checkAnswer(){
+async function checkAnswer(autoTimed=false){
   if(answered||!ramble)return;
+  if(timedQuizEnabled&&timedQuizPhase!=="think"&&!autoTimed)return;
 
   const input=document.getElementById("answer").value.trim();
   const feedback=document.getElementById("feedback");
@@ -1602,7 +1814,7 @@ async function checkAnswer(){
 
   if(!q)return;
 
-  if(!input){
+  if(!input&&!autoTimed){
     feedback.textContent="⚠️ Please enter your answer first.";
     feedback.className="amber";
     return;
@@ -1610,11 +1822,11 @@ async function checkAnswer(){
 
   checkBtn.disabled=true;
 
-  const confirmed=await confirmAnswerPreview(q.question,input);
-
-  checkBtn.disabled=false;
-
-  if(!confirmed)return;
+  if(!autoTimed){
+    const confirmed=await confirmAnswerPreview(q.question,input);
+    checkBtn.disabled=false;
+    if(!confirmed)return;
+  }
 
   stopQuestionTimer();
 
@@ -1673,7 +1885,11 @@ async function checkAnswer(){
   document.getElementById("score").textContent="Correct Answers: "+score;
   document.getElementById("answer").disabled=true;
   document.getElementById("checkBtn").classList.add("hidden");
-  document.getElementById("nextBtn").classList.remove("hidden");
+  document.getElementById("nextBtn").classList.toggle("hidden",timedQuizEnabled);
+  if(timedQuizEnabled){
+    if(autoTimed){const note=document.createElement('p');note.className='amber';note.style.fontWeight='bold';note.textContent='⏰ TIME IS UP — your current answer has been checked automatically.';feedback.prepend(note);}
+    startTimedAnswerReveal();
+  }
 }
 function nextQuestion(){if(!answered||!ramble)return;stopQuestionTimer();current++;showQuestion();}
 function saveCompletedQuiz(){
@@ -1745,10 +1961,18 @@ function restartGame(mode="same"){
 }
 function toggleRamble(){
   ramble=!ramble;document.getElementById("rambleBtn").textContent=ramble?"⏸ PAUSE QUIZ":"▶ RESUME QUIZ";
-  if(ramble){if(order.length===0){shuffleQuestions();current=0;score=0;attempts=[];roundSaved=false;timerRemaining=saveTimerSettings();showQuestion("▶ Quiz resumed.");}
-    else if(answered){document.getElementById("feedback").textContent="▶ Quiz resumed. Press NEXT QUESTION to continue.";stopQuestionTimer();}
-    else{startQuestionTimer(false);document.getElementById("feedback").textContent="▶ Quiz resumed.";}}
-  else{stopQuestionTimer();document.getElementById("feedback").textContent="⏸ Quiz paused.";}saveQuizSession();
+  if(ramble){
+    if(order.length===0){shuffleQuestions();current=0;score=0;attempts=[];roundSaved=false;timerRemaining=saveTimerSettings();showQuestion("▶ Quiz resumed.");}
+    else if(answered){
+      if(timedQuizEnabled&&timedQuizPhase==="reveal")runTimedQuizPhase("reveal",Math.max(1,timedQuizRemaining));
+      else{document.getElementById("feedback").textContent="▶ Quiz resumed. Press NEXT QUESTION to continue.";stopQuestionTimer();}
+    }else{
+      if(timedQuizEnabled&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));
+      else startQuestionTimer(false);
+      document.getElementById("feedback").textContent="▶ Quiz resumed.";
+    }
+  }else{stopQuestionTimer();document.getElementById("feedback").textContent="⏸ Quiz paused.";}
+  saveQuizSession();
 }
 const screenHistory = ["home"];
 let internalNavigation = false;
@@ -1837,14 +2061,172 @@ function navigateTo(tab){
   requestAnimationFrame(animate);
 })();
   
+// ---------------- PRESENTATION MODE ----------------
+const PRESENTATION_DEFAULTS={readBase:8,readPerWord:0.5,secondsPerWord:5,revealSeconds:12};
+let presentationQuestions=[];
+let presentationIndex=0;
+let presentationPhase='idle';
+let presentationRemaining=0;
+let presentationPhaseDuration=0;
+let presentationInterval=null;
+let presentationPaused=false;
+let presentationWasRunningBeforeHide=false;
+
+function presentationWordCount(text){
+  return String(text||'').trim().split(/\s+/).filter(Boolean).length;
+}
+function presentationSettings(){
+  const number=(id,fallback,min,max)=>{
+    const value=Number(document.getElementById(id).value);
+    return Math.min(max,Math.max(min,Number.isFinite(value)?value:fallback));
+  };
+  return {
+    readBase:number('presentationReadBase',8,3,60),
+    readPerWord:number('presentationReadPerWord',0.5,0,5),
+    secondsPerWord:number('presentationSecondsPerWord',5,1,20),
+    revealSeconds:number('presentationRevealSeconds',12,5,60)
+  };
+}
+function renderPresentationSetSelect(){
+  const select=document.getElementById('presentationSetSelect');
+  select.replaceChildren();
+  const all=document.createElement('option');
+  all.value='all';all.textContent=`All Questions (${questions.length})`;select.appendChild(all);
+  sets.forEach(set=>{
+    const count=set.questionIds.filter(id=>questions.some(q=>q.id===id)).length;
+    const option=document.createElement('option');option.value=set.id;option.textContent=`${set.name} (${count})`;select.appendChild(option);
+  });
+  const info=document.getElementById('presentationSetInfo');
+  info.textContent=`${questions.length} questions in the Question Bank · ${sets.length} custom sets`;
+}
+function getPresentationQuestions(){
+  const id=document.getElementById('presentationSetSelect').value;
+  if(id==='all')return questions.slice();
+  const set=sets.find(item=>item.id===id);
+  return set?set.questionIds.map(qid=>questions.find(q=>q.id===qid)).filter(Boolean):[];
+}
+function startPresentation(){
+  applyModeSound("presentation");
+  const selected=getPresentationQuestions();
+  if(!selected.length){appAlert('There are no questions in this selection. Add questions or choose another set.');return;}
+  stopPresentationTimer();
+  presentationQuestions=selected;
+  presentationIndex=0;
+  presentationPaused=false;
+  document.getElementById('presentationSetup').classList.add('hidden');
+  document.getElementById('presentationRun').classList.remove('hidden');
+  document.getElementById('presentationPauseBtn').textContent='⏸ PAUSE';
+  showPresentationQuestion();
+}
+function showPresentationQuestion(){
+  if(presentationIndex>=presentationQuestions.length){
+    finishPresentation();
+    return;
+  }
+  const q=presentationQuestions[presentationIndex];
+  document.getElementById('presentationQuestionCount').textContent=`Question ${presentationIndex+1}/${presentationQuestions.length}`;
+  document.getElementById('presentationQuestion').textContent=q.question;
+  document.getElementById('presentationAnswer').classList.add('hidden');
+  const settings=presentationSettings();
+  const words=presentationWordCount(q.question);
+  const readSeconds=Math.ceil(settings.readBase+Math.max(0,words-1)*settings.readPerWord);
+  startPresentationPhase('read1',readSeconds);
+}
+function startPresentationPhase(phase,duration){
+  stopPresentationTimer();
+  presentationPhase=phase;
+  presentationPhaseDuration=Math.max(1,Math.ceil(duration));
+  presentationRemaining=presentationPhaseDuration;
+  presentationPaused=false;
+  document.getElementById('presentationPauseBtn').textContent='⏸ PAUSE';
+  updatePresentationDisplay();
+  presentationInterval=setInterval(()=>{
+    if(presentationPaused||document.hidden)return;
+    presentationRemaining=Math.max(0,presentationRemaining-1);
+    updatePresentationDisplay();
+    if(presentationPhase==='think'&&presentationRemaining>0){
+      const f=440+440*(presentationRemaining/Math.max(1,presentationPhaseDuration));
+      if(document.getElementById('organEnabled').checked)playOrganNote(f,.22);
+      if(document.getElementById('violinEnabled').checked)playViolinNote(f,.28);
+    }
+    if(presentationRemaining<=0){
+      if(presentationPhase==='think'){
+        if(document.getElementById('organEnabled').checked)playTimeoutOrgan();
+        if(document.getElementById('violinEnabled').checked)playTimeoutViolin();
+      }
+      stopPresentationTimer();
+      advancePresentationPhase();
+    }
+  },1000);
+}
+function updatePresentationDisplay(){
+  const labels={read1:'READING 1 / 2',read2:'READING 2 / 2',think:'ANSWER THINKING TIME',reveal:'ANSWER REVEAL'};
+  const kickers={read1:'QUESTION · FIRST READING',read2:'QUESTION · SECOND READING',think:'QUESTION · RECALL YOUR ANSWER',reveal:'QUESTION + CORRECT ANSWER'};
+  const metas={read1:'Read the question carefully · First reading',read2:'Read the same question again · Second reading',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'};
+  document.getElementById('presentationPhaseLabel').textContent=labels[presentationPhase]||'';
+  document.getElementById('presentationKicker').textContent=kickers[presentationPhase]||'';
+  document.getElementById('presentationMeta').textContent=metas[presentationPhase]||'';
+  document.getElementById('presentationTimer').textContent=formatTime(presentationRemaining);
+  const progress=presentationPhaseDuration?presentationRemaining/presentationPhaseDuration:0;
+  document.getElementById('presentationProgressBar').style.transform=`scaleX(${Math.max(0,Math.min(1,progress))})`;
+  const answer=document.getElementById('presentationAnswer');
+  if(presentationPhase==='reveal'){
+    const q=presentationQuestions[presentationIndex];
+    answer.textContent=q.answers.map((item,index)=>`${q.answers.length>1?(index+1)+'. ':''}${item}`).join('\n\n');
+    answer.classList.remove('hidden');
+  }else answer.classList.add('hidden');
+}
+function advancePresentationPhase(){
+  if(presentationPaused)return;
+  const q=presentationQuestions[presentationIndex];
+  const settings=presentationSettings();
+  if(presentationPhase==='read1'){
+    startPresentationPhase('read2',Math.ceil(settings.readBase+Math.max(0,presentationWordCount(q.question)-1)*settings.readPerWord));
+  }else if(presentationPhase==='read2'){
+    const answerWords=q.answers.reduce((total,item)=>total+presentationWordCount(item),0);
+    startPresentationPhase('think',Math.max(1,answerWords*settings.secondsPerWord));
+  }else if(presentationPhase==='think'){
+    startPresentationPhase('reveal',settings.revealSeconds);
+  }else if(presentationPhase==='reveal'){
+    presentationIndex++;
+    showPresentationQuestion();
+  }
+}
+function stopPresentationTimer(){
+  if(presentationInterval!==null){clearInterval(presentationInterval);presentationInterval=null;}
+}
+function togglePresentationPause(){
+  if(presentationPhase==='idle')return;
+  presentationPaused=!presentationPaused;
+  document.getElementById('presentationPauseBtn').textContent=presentationPaused?'▶ RESUME':'⏸ PAUSE';
+  document.getElementById('presentationMeta').textContent=presentationPaused?'Presentation paused':({read1:'Read the question carefully · First reading',read2:'Read the same question again · Second reading',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'}[presentationPhase]||'');
+}
+function stopPresentation(returnToSetup){
+  stopPresentationTimer();
+  presentationPhase='idle';presentationPaused=false;presentationQuestions=[];presentationIndex=0;
+  document.getElementById('presentationRun').classList.add('hidden');
+  document.getElementById('presentationSetup').classList.remove('hidden');
+  if(returnToSetup&&activeTab!=='presentation')showTab('presentation');
+}
+function finishPresentation(){
+  stopPresentationTimer();
+  presentationPhase='idle';
+  document.getElementById('presentationRun').classList.add('hidden');
+  document.getElementById('presentationSetup').classList.remove('hidden');
+  appAlert('🎉 Presentation completed! You have reviewed all '+presentationQuestions.length+' questions.');
+  presentationQuestions=[];presentationIndex=0;
+}
+
 function showTab(tab){
   const screens = [
-    "home","play","history","questions","sets","backup"
+    "home","play","presentation","history","questions","sets","backup"
   ];
 
   if(!screens.includes(tab)) tab = "home";
 
   activeTab = tab;
+  if(tab==="play")applyModeSound("quiz");
+  else if(tab==="presentation")applyModeSound("presentation");
 
   screens.forEach(name=>{
     const panel = document.getElementById(name+"Panel");
@@ -1859,7 +2241,22 @@ function showTab(tab){
     document.getElementById("timerStatus").textContent =
       "⏸ Timer paused — you are outside the Quiz screen.";
   }else if(!answered && ramble && order.length > 0){
-    startQuestionTimer(false);
+    if(timedQuizEnabled&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));
+    else startQuestionTimer(false);
+  }
+
+  if(tab !== "presentation" && presentationPhase !== "idle"){
+    stopPresentationTimer();
+  }else if(tab === "presentation"){
+    renderPresentationSetSelect();
+    if(presentationPhase !== "idle" && !presentationPaused && !document.hidden && presentationInterval===null){
+      presentationInterval=setInterval(()=>{
+        if(presentationPaused||document.hidden)return;
+        presentationRemaining=Math.max(0,presentationRemaining-1);
+        updatePresentationDisplay();
+        if(presentationRemaining<=0){stopPresentationTimer();advancePresentationPhase();}
+      },1000);
+    }
   }
 
   if(tab === "questions") renderQuestions();
@@ -2154,14 +2551,25 @@ function renderSets(){
   });
 }
 function showPlaySetScreen() {
+  stopQuestionTimer();
+  timedQuizPhase="idle";
   document.getElementById("playSetScreen").classList.remove("hidden");
   document.getElementById("playQuizScreen").classList.add("hidden");
   updateStartQuizButton();
 }
 
 function startQuizScreen() {
+  if(document.getElementById('timedQuizToggle').checked){
+    document.getElementById('timedQuizSettingsModal').classList.remove('hidden');
+    return;
+  }
+  timedQuizEnabled=false;document.getElementById('timerEnabled').checked=false;launchQuizScreen();
+}
+function launchQuizScreen(){
+  applyModeSound("quiz");
   document.getElementById("playSetScreen").classList.add("hidden");
   document.getElementById("playQuizScreen").classList.remove("hidden");
+  restartGame("reset");
 }
 function showQuestionScreen(screen) {
   const screens = {
@@ -2756,5 +3164,21 @@ window.alert = function(message) {
     </div>
   </div>
 </div>
+
+<div id="timedQuizSettingsModal" class="timed-quiz-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="timedQuizTitle">
+  <div class="timed-quiz-card">
+    <h2 id="timedQuizTitle">⏱️ Timed Quiz Settings</h2>
+    <p class="small">Set how long each question will be read, answered, and displayed.</p>
+    <div class="timed-setting"><label for="quizReadBase">Minimum reading time per display (seconds)</label><input id="quizReadBase" type="number" min="1" max="120" step="1" value="8"></div>
+    <div class="timed-setting"><label for="quizReadPerWord">Additional reading time per question word (seconds)</label><input id="quizReadPerWord" type="number" min="0" max="10" step="0.1" value="0.5"></div>
+    <div class="timed-setting"><label for="quizThinkPerWord">Answer thinking time per answer word (seconds)</label><input id="quizThinkPerWord" type="number" min="0.1" max="30" step="0.1" value="5"></div>
+    <div class="timed-setting"><label for="quizAnswerDisplay">Answer display time (seconds)</label><input id="quizAnswerDisplay" type="number" min="1" max="300" step="1" value="12"></div>
+    <div class="timed-quiz-actions">
+      <button type="button" class="secondary" onclick="closeTimedQuizSettings()">CANCEL</button>
+      <button type="button" class="main" onclick="beginTimedQuiz()">▶ START TIMED QUIZ</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
