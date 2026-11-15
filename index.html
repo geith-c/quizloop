@@ -1153,7 +1153,7 @@ body.light-mode .presentation-meta{color:#66829d}
       <span id="presentationPhaseLabel">READING 1 / 2</span>
     </div>
     <div class="presentation-stage">
-      <div class="presentation-kicker" id="presentationKicker">QUESTION · READ</div>
+      <div class="presentation-kicker" id="presentationKicker">QUESTION</div>
       <div class="presentation-question" id="presentationQuestion"></div>
       <div class="presentation-answer hidden" id="presentationAnswer"></div>
       <div class="presentation-timer" id="presentationTimer">00:08</div>
@@ -1610,7 +1610,12 @@ document.addEventListener("visibilitychange",function(){
     }
     document.getElementById("timerStatus").textContent="⏸ Timer paused — app is in the background.";
   }else{
-    if(activeTab==="play"&&ramble&&!answered&&order.length>0){if(timedQuizEnabled&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));else startQuestionTimer(false);}
+    // Resume the answer-review countdown too; answered=true is expected during reveal.
+    if(activeTab==="play"&&ramble&&order.length>0){
+      if(timedQuizEnabled&&answered&&timedQuizPhase==="reveal")runTimedQuizPhase("reveal",Math.max(1,timedQuizRemaining));
+      else if(timedQuizEnabled&&!answered&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));
+      else if(!answered)startQuestionTimer(false);
+    }
     if(activeTab==="presentation"&&presentationPhase!=="idle"&&presentationWasRunningBeforeHide&&!presentationPaused){
       presentationWasRunningBeforeHide=false;
       presentationInterval=setInterval(()=>{
@@ -1676,11 +1681,14 @@ function runTimedQuizPhase(phase,duration){
 function updateTimedQuizDisplay(){
   const value=document.getElementById('timerValue'),status=document.getElementById('timerStatus');
   value.textContent=formatTime(timedQuizRemaining);value.style.color=timedQuizRemaining<=5?'#ff7189':'#54b7ff';
-  const labels={read1:'📖 Read',read2:'📖 Read again',think:'✍️ Answer now',reveal:'📚 Correct answers — review time'};
+  const labels={read1:'📖 Read',read2:'📖 Read again',think:'✍️ Answer now — sound countdown',reveal:'📚 Correct answers — review time'};
   status.textContent=labels[timedQuizPhase]||'Timed Quiz';
 }
 function advanceTimedQuizPhase(){
-  const q=currentQuestion();if(!q||answered)return;
+  const q=currentQuestion();if(!q)return;
+  // The answer is already marked as answered during the reveal phase;
+  // allow the reveal timer to finish and advance to the next question.
+  if(answered&&timedQuizPhase!=='reveal')return;
   if(timedQuizPhase==='read1'){
     const words=presentationWordCount(q.question);runTimedQuizPhase('read2',Math.max(1,Math.ceil(timedQuizSettings.readBase+Math.max(0,words-1)*timedQuizSettings.readPerWord)));
   }else if(timedQuizPhase==='read2'){
@@ -1693,14 +1701,34 @@ function advanceTimedQuizPhase(){
   }
 }
 function startTimedAnswerReveal(){
-  document.getElementById('checkBtn').classList.add('hidden');document.getElementById('nextBtn').classList.add('hidden');
+  // Dedicated reveal countdown: do not route this through the question-phase
+  // transition logic, because the answer is already marked as answered here.
+  stopQuestionTimer();
+  timedQuizPhase='reveal';
+  timedQuizDuration=Math.max(1,Math.ceil(timedQuizSettings.answerDisplay));
+  timedQuizRemaining=timedQuizDuration;
+  document.getElementById('checkBtn').classList.add('hidden');
+  document.getElementById('nextBtn').classList.add('hidden');
   document.getElementById('answer').disabled=true;
-  runTimedQuizPhase('reveal',timedQuizSettings.answerDisplay);
+  document.getElementById('checkBtn').disabled=true;
+  updateTimedQuizDisplay();
+  if(document.hidden||activeTab!=='play'||!ramble)return;
+  timerInterval=setInterval(()=>{
+    if(document.hidden||activeTab!=='play'||!ramble){stopQuestionTimer();return;}
+    if(timedQuizPhase!=='reveal'||!answered){stopQuestionTimer();return;}
+    timedQuizRemaining=Math.max(0,timedQuizRemaining-1);
+    updateTimedQuizDisplay();
+    if(timedQuizRemaining<=0){
+      stopQuestionTimer();
+      timedQuizPhase='idle';
+      nextQuestion();
+    }
+  },1000);
 }
 
 function handleTimeout(){
   if(answered)return;const q=currentQuestion();if(!q)return;const input=document.getElementById("answer").value.trim();
-  if(input){checkAnswer();const feedback=document.getElementById("feedback"),notice=document.createElement("p");notice.className="amber";notice.style.fontWeight="bold";notice.textContent="⏰ TIME'S UP! Your answer has been checked.";feedback.prepend(notice);document.getElementById("timerStatus").textContent="Time is up. Press NEXT QUESTION to continue.";playTimeoutOrgan();playTimeoutViolin();return;}
+  if(input){checkAnswer();const feedback=document.getElementById("feedback"),notice=document.createElement("p");notice.className="amber";notice.style.fontWeight="bold";notice.textContent="⏰ TIME'S UP! Your answer has been checked. Review the correct answers before the next question.";feedback.prepend(notice);document.getElementById("timerStatus").textContent="Review the correct answers; the next question will start automatically.";playTimeoutOrgan();playTimeoutViolin();return;}
   answered=true;stopQuestionTimer();const feedback=document.getElementById("feedback");feedback.replaceChildren();
   const heading=document.createElement("div");heading.className="red";heading.style.fontWeight="bold";heading.style.fontSize="20px";heading.textContent="⏰ TIME'S UP! NO ANSWER.";feedback.appendChild(heading);
   const subtitle=document.createElement("p");subtitle.textContent="Here are the correct answers:";feedback.appendChild(subtitle);
@@ -1912,23 +1940,26 @@ async function checkAnswer(autoTimed=false){
   document.getElementById("score").textContent="Correct Answers: "+score;
   document.getElementById("answer").disabled=true;
   document.getElementById("checkBtn").classList.add("hidden");
-  document.getElementById("nextBtn").classList.toggle("hidden",timedQuizEnabled);
+  document.getElementById("nextBtn").classList.add("hidden");
+  if(autoTimed){
+    const note=document.createElement('p');
+    note.className='amber';
+    note.style.fontWeight='bold';
+    note.textContent='⏰ TIME IS UP — your current answer has been checked automatically.';
+    feedback.prepend(note);
+  }
   if(timedQuizEnabled){
-    if(autoTimed){
-      const note=document.createElement('p');
-      note.className='amber';
-      note.style.fontWeight='bold';
-      note.textContent='⏰ TIME IS UP — your current answer has been checked automatically.';
-      feedback.prepend(note);
-      // Automatic checking keeps the configured answer-display/reveal time.
-      startTimedAnswerReveal();
-    }else{
-      // A manual CHECK ANSWER ends this question immediately; do not wait
-      // for the answer-display timer to expire.
-      timedQuizPhase='idle';
-      stopQuestionTimer();
-      nextQuestion();
-    }
+    // With Timer ON, keep the correct answers visible for the configured review time,
+    // then automatically advance to the next question.
+    startTimedAnswerReveal();
+  }else{
+    // With Timer OFF, do not run an answer-display countdown or auto-advance.
+    // Let the user continue manually with NEXT QUESTION.
+    timedQuizPhase='idle';
+    document.getElementById("answer").disabled=true;
+    document.getElementById("checkBtn").classList.add("hidden");
+    document.getElementById("nextBtn").classList.remove("hidden");
+    document.getElementById("timerStatus").textContent="Timer is off. Press NEXT QUESTION when you are ready.";
   }
 }
 function nextQuestion(){if(!answered||!ramble)return;stopQuestionTimer();current++;showQuestion();}
