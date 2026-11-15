@@ -1153,7 +1153,7 @@ body.light-mode .presentation-meta{color:#66829d}
       <span id="presentationPhaseLabel">READING 1 / 2</span>
     </div>
     <div class="presentation-stage">
-      <div class="presentation-kicker" id="presentationKicker">QUESTION · FIRST READING</div>
+      <div class="presentation-kicker" id="presentationKicker">QUESTION · READ</div>
       <div class="presentation-question" id="presentationQuestion"></div>
       <div class="presentation-answer hidden" id="presentationAnswer"></div>
       <div class="presentation-timer" id="presentationTimer">00:08</div>
@@ -1482,6 +1482,8 @@ const OLD_KEY_V2 = "rambleMemoryQuiz_v2";
 const OLD_KEY_V1 = "rambleMemoryQuiz_v1";
 const HISTORY_KEY = "ramble_quiz_history_v1";
 const TIMER_SETTINGS_KEY = "ramble_quiz_timer_settings_v1";
+const TIMED_QUIZ_SETTINGS_KEY = "ramble_quiz_timed_settings_v1";
+const PRESENTATION_SETTINGS_KEY = "ramble_quiz_presentation_settings_v1";
 
 let quizHistory = [];
 let roundSaved = false;
@@ -1634,10 +1636,22 @@ function startQuestionTimer(reset=true){
   },1000);
 }
 function timedNumber(id,fallback,min,max){const v=Number(document.getElementById(id).value);return Math.min(max,Math.max(min,Number.isFinite(v)?v:fallback));}
+function saveTimedQuizSettings(){
+  const settings={readBase:timedNumber('quizReadBase',8,1,120),readPerWord:timedNumber('quizReadPerWord',.5,0,10),thinkPerWord:timedNumber('quizThinkPerWord',5,.1,30),answerDisplay:timedNumber('quizAnswerDisplay',12,1,300)};
+  try{localStorage.setItem(TIMED_QUIZ_SETTINGS_KEY,JSON.stringify(settings));}catch(e){console.warn('Unable to save timed quiz settings:',e);}
+  timedQuizSettings=settings;return settings;
+}
+function loadTimedQuizSettings(){
+  try{const saved=JSON.parse(localStorage.getItem(TIMED_QUIZ_SETTINGS_KEY)||'null');if(saved&&typeof saved==='object'){
+    const fields=[['quizReadBase','readBase',8,1,120],['quizReadPerWord','readPerWord',.5,0,10],['quizThinkPerWord','thinkPerWord',5,.1,30],['quizAnswerDisplay','answerDisplay',12,1,300]];
+    fields.forEach(([id,key,fallback,min,max])=>{const value=Number(saved[key]);if(Number.isFinite(value))document.getElementById(id).value=Math.min(max,Math.max(min,value));});
+  }}catch(e){console.warn('Unable to load timed quiz settings:',e);}
+  readTimedQuizSettings();
+}
 function readTimedQuizSettings(){timedQuizSettings={readBase:timedNumber('quizReadBase',8,1,120),readPerWord:timedNumber('quizReadPerWord',.5,0,10),thinkPerWord:timedNumber('quizThinkPerWord',5,.1,30),answerDisplay:timedNumber('quizAnswerDisplay',12,1,300)};return timedQuizSettings;}
 function toggleTimedQuizOption(enabled){timedQuizEnabled=!!enabled;document.getElementById('timerEnabled').checked=timedQuizEnabled;saveTimerSettings();}
 function closeTimedQuizSettings(){document.getElementById('timedQuizSettingsModal').classList.add('hidden');}
-function beginTimedQuiz(){readTimedQuizSettings();closeTimedQuizSettings();timedQuizEnabled=true;document.getElementById('timerEnabled').checked=true;saveTimerSettings();launchQuizScreen();}
+function beginTimedQuiz(){saveTimedQuizSettings();closeTimedQuizSettings();timedQuizEnabled=true;document.getElementById('timerEnabled').checked=true;saveTimerSettings();launchQuizScreen();}
 function startTimedQuizQuestion(){
   stopQuestionTimer();if(!timedQuizEnabled||answered||!ramble||document.hidden||activeTab!=='play'||document.getElementById('playQuizScreen').classList.contains('hidden'))return;
   const q=currentQuestion();if(!q)return;
@@ -1662,7 +1676,7 @@ function runTimedQuizPhase(phase,duration){
 function updateTimedQuizDisplay(){
   const value=document.getElementById('timerValue'),status=document.getElementById('timerStatus');
   value.textContent=formatTime(timedQuizRemaining);value.style.color=timedQuizRemaining<=5?'#ff7189':'#54b7ff';
-  const labels={read1:'📖 First reading',read2:'📖 Second reading',think:'✍️ Answer now',reveal:'📚 Correct answers'};
+  const labels={read1:'📖 Read',read2:'📖 Read again',think:'✍️ Answer now',reveal:'📚 Correct answers — review time'};
   status.textContent=labels[timedQuizPhase]||'Timed Quiz';
 }
 function advanceTimedQuizPhase(){
@@ -1741,6 +1755,19 @@ function restoreQuizSession(){
   }catch(error){console.warn("Unable to restore quiz session:",error);return false;}
 }
 loadTimerSettings();updateSoundButtons();loadModeSoundChoices();
+// The timed-quiz dialog is later in the document, so load its values after parsing finishes.
+document.addEventListener('DOMContentLoaded',function(){
+  loadTimedQuizSettings();loadPresentationSettings();
+  ['quizReadBase','quizReadPerWord','quizThinkPerWord','quizAnswerDisplay'].forEach(id=>{
+    const el=document.getElementById(id);el.addEventListener('change',saveTimedQuizSettings);el.addEventListener('blur',saveTimedQuizSettings);
+  });
+  ['presentationReadBase','presentationReadPerWord','presentationSecondsPerWord','presentationRevealSeconds'].forEach(id=>{
+    const el=document.getElementById(id);el.addEventListener('change',savePresentationSettings);el.addEventListener('blur',savePresentationSettings);
+  });
+});
+// Save all timer values when the app is backgrounded or closed.
+window.addEventListener('pagehide',function(){saveTimerSettings();saveTimedQuizSettings();savePresentationSettings();});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){saveTimerSettings();saveTimedQuizSettings();savePresentationSettings();}});
 // Each mode has its own sound selector and saved selection.
 document.getElementById("quizSoundSelect").addEventListener("change",function(){handleModeSoundChange("quiz");});
 document.getElementById("presentationSoundSelect").addEventListener("change",function(){handleModeSoundChange("presentation");});
@@ -1887,8 +1914,21 @@ async function checkAnswer(autoTimed=false){
   document.getElementById("checkBtn").classList.add("hidden");
   document.getElementById("nextBtn").classList.toggle("hidden",timedQuizEnabled);
   if(timedQuizEnabled){
-    if(autoTimed){const note=document.createElement('p');note.className='amber';note.style.fontWeight='bold';note.textContent='⏰ TIME IS UP — your current answer has been checked automatically.';feedback.prepend(note);}
-    startTimedAnswerReveal();
+    if(autoTimed){
+      const note=document.createElement('p');
+      note.className='amber';
+      note.style.fontWeight='bold';
+      note.textContent='⏰ TIME IS UP — your current answer has been checked automatically.';
+      feedback.prepend(note);
+      // Automatic checking keeps the configured answer-display/reveal time.
+      startTimedAnswerReveal();
+    }else{
+      // A manual CHECK ANSWER ends this question immediately; do not wait
+      // for the answer-display timer to expire.
+      timedQuizPhase='idle';
+      stopQuestionTimer();
+      nextQuestion();
+    }
   }
 }
 function nextQuestion(){if(!answered||!ramble)return;stopQuestionTimer();current++;showQuestion();}
@@ -2075,6 +2115,17 @@ let presentationWasRunningBeforeHide=false;
 function presentationWordCount(text){
   return String(text||'').trim().split(/\s+/).filter(Boolean).length;
 }
+function savePresentationSettings(){
+  const settings=presentationSettings();
+  try{localStorage.setItem(PRESENTATION_SETTINGS_KEY,JSON.stringify(settings));}catch(e){console.warn('Unable to save presentation settings:',e);}
+  return settings;
+}
+function loadPresentationSettings(){
+  try{const saved=JSON.parse(localStorage.getItem(PRESENTATION_SETTINGS_KEY)||'null');if(saved&&typeof saved==='object'){
+    const fields=[['presentationReadBase','readBase',8,3,60],['presentationReadPerWord','readPerWord',.5,0,5],['presentationSecondsPerWord','secondsPerWord',5,1,20],['presentationRevealSeconds','revealSeconds',12,5,60]];
+    fields.forEach(([id,key,fallback,min,max])=>{const value=Number(saved[key]);if(Number.isFinite(value))document.getElementById(id).value=Math.min(max,Math.max(min,value));});
+  }}catch(e){console.warn('Unable to load presentation settings:',e);}
+}
 function presentationSettings(){
   const number=(id,fallback,min,max)=>{
     const value=Number(document.getElementById(id).value);
@@ -2161,8 +2212,8 @@ function startPresentationPhase(phase,duration){
 }
 function updatePresentationDisplay(){
   const labels={read1:'READING 1 / 2',read2:'READING 2 / 2',think:'ANSWER THINKING TIME',reveal:'ANSWER REVEAL'};
-  const kickers={read1:'QUESTION · FIRST READING',read2:'QUESTION · SECOND READING',think:'QUESTION · RECALL YOUR ANSWER',reveal:'QUESTION + CORRECT ANSWER'};
-  const metas={read1:'Read the question carefully · First reading',read2:'Read the same question again · Second reading',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'};
+  const kickers={read1:'QUESTION · Read',read2:'QUESTION · Read again',think:'QUESTION · RECALL YOUR ANSWER',reveal:'QUESTION + CORRECT ANSWER'};
+  const metas={read1:'Read the question carefully',read2:'Read the same question again',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'};
   document.getElementById('presentationPhaseLabel').textContent=labels[presentationPhase]||'';
   document.getElementById('presentationKicker').textContent=kickers[presentationPhase]||'';
   document.getElementById('presentationMeta').textContent=metas[presentationPhase]||'';
@@ -2199,7 +2250,7 @@ function togglePresentationPause(){
   if(presentationPhase==='idle')return;
   presentationPaused=!presentationPaused;
   document.getElementById('presentationPauseBtn').textContent=presentationPaused?'▶ RESUME':'⏸ PAUSE';
-  document.getElementById('presentationMeta').textContent=presentationPaused?'Presentation paused':({read1:'Read the question carefully · First reading',read2:'Read the same question again · Second reading',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'}[presentationPhase]||'');
+  document.getElementById('presentationMeta').textContent=presentationPaused?'Presentation paused':({read1:'Read the question carefully',read2:'Read the same question again',think:'Recall the complete answer before it appears',reveal:'Read and review the complete correct answer'}[presentationPhase]||'');
 }
 function stopPresentation(returnToSetup){
   stopPresentationTimer();
