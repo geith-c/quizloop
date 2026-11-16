@@ -1753,7 +1753,6 @@ function startQuestionTimer(reset=true){
 
   stopQuestionTimer();
 
-  // TIMER OFF: CHECK ANSWER must remain available.
   const checkBtn = document.getElementById("checkBtn");
   const answer = document.getElementById("answer");
 
@@ -1885,8 +1884,6 @@ function updateTimedQuizDisplay(){
 }
 function advanceTimedQuizPhase(){
   const q=currentQuestion();if(!q)return;
-  // The answer is already marked as answered during the reveal phase;
-  // allow the reveal timer to finish and advance to the next question.
   if(answered&&timedQuizPhase!=='reveal')return;
   if(timedQuizPhase==='read1'){
     const words=presentationWordCount(q.question);runTimedQuizPhase('read2',Math.max(1,Math.ceil(timedQuizSettings.readBase+Math.max(0,words-1)*timedQuizSettings.readPerWord)));
@@ -1900,8 +1897,6 @@ function advanceTimedQuizPhase(){
   }
 }
 function startTimedAnswerReveal(){
-  // Dedicated reveal countdown: do not route this through the question-phase
-  // transition logic, because the answer is already marked as answered here.
   stopQuestionTimer();
   timedQuizPhase='reveal';
   timedQuizDuration=Math.max(1,Math.ceil(timedQuizSettings.answerDisplay));
@@ -2145,12 +2140,8 @@ async function checkAnswer(autoTimed=false){
     feedback.prepend(note);
   }
   if(timedQuizEnabled){
-    // With Timer ON, keep the correct answers visible for the configured review time,
-    // then automatically advance to the next question.
     startTimedAnswerReveal();
   }else{
-    // With Timer OFF, do not run an answer-display countdown or auto-advance.
-    // Let the user continue manually with NEXT QUESTION.
     timedQuizPhase='idle';
     document.getElementById("answer").disabled=true;
     document.getElementById("checkBtn").classList.add("hidden");
@@ -2328,7 +2319,6 @@ function navigateTo(tab){
   requestAnimationFrame(animate);
 })();
   
-// ---------------- PRESENTATION MODE ----------------
 const PRESENTATION_DEFAULTS={readBase:8,readPerWord:0.5,secondsPerWord:5,revealSeconds:12};
 let presentationQuestions=[];
 let presentationIndex=0;
@@ -2383,19 +2373,39 @@ function getPresentationQuestions(){
   const set=sets.find(item=>item.id===id);
   return set?set.questionIds.map(qid=>questions.find(q=>q.id===qid)).filter(Boolean):[];
 }
+
+
 function startPresentation(){
   applyModeSound("presentation");
+
   const selected=getPresentationQuestions();
-  if(!selected.length){appAlert('There are no questions in this selection. Add questions or choose another set.');return;}
+
+  if(!selected.length){
+    appAlert('There are no questions in this selection. Add questions or choose another set.');
+    return;
+  }
+
   stopPresentationTimer();
-  presentationQuestions=selected;
+
+  presentationQuestions=selected.slice();
+
+  for(let i=presentationQuestions.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [presentationQuestions[i],presentationQuestions[j]]=
+    [presentationQuestions[j],presentationQuestions[i]];
+  }
+
   presentationIndex=0;
   presentationPaused=false;
+
   document.getElementById('presentationSetup').classList.add('hidden');
   document.getElementById('presentationRun').classList.remove('hidden');
   document.getElementById('presentationPauseBtn').textContent='⏸ PAUSE';
+
   showPresentationQuestion();
 }
+
+
 function showPresentationQuestion(){
   if(presentationIndex>=presentationQuestions.length){
     finishPresentation();
@@ -2692,7 +2702,6 @@ function showMySetsScreen() {
 function renderSetPicker() {
   const picker = document.getElementById("setQuestionPicker");
 
-  // Preserve current selections when the screen is refreshed
   const hasExistingChecks =
     picker.querySelector(".set-question-check") !== null;
 
@@ -2704,8 +2713,6 @@ function renderSetPicker() {
       : []
   );
 
-  // When opening an existing set for the first time,
-  // load its saved question selections.
   if (!hasExistingChecks && editingSetId) {
     const existing = sets.find(s => s.id === editingSetId);
     if (existing) {
@@ -2804,7 +2811,6 @@ function editSet(id) {
   document.getElementById("saveSetBtn").textContent = "💾 Save Set";
   document.getElementById("cancelSetBtn").classList.remove("hidden");
 
-  // Clear old checks so the selected questions come from this set
   document.getElementById("setQuestionPicker").replaceChildren();
 
   renderSetPicker();
@@ -2901,7 +2907,6 @@ async function exportBackup() {
       return;
     }
 
-    // Create backup password
     const password = await appPrompt(
       "Create a password for your encrypted backup. Use at least 8 characters:",
       {
@@ -2921,7 +2926,6 @@ async function exportBackup() {
       return;
     }
 
-    // Confirm backup password
     const confirmPassword = await appPrompt(
       "Enter your password again to confirm:",
       {
@@ -2941,7 +2945,6 @@ async function exportBackup() {
       return;
     }
 
-    // Collect quiz data
     const data = {
       version: 3,
       exportedAt: new Date().toISOString(),
@@ -2956,7 +2959,6 @@ async function exportBackup() {
       }
     };
 
-    // Encrypt backup data
     const encrypted = await encryptBackupText(
       JSON.stringify(data),
       password
@@ -2978,7 +2980,6 @@ async function exportBackup() {
       { type: "application/octet-stream" }
     );
 
-    // Share the encrypted backup when supported
     if (
       navigator.share &&
       navigator.canShare &&
@@ -2991,7 +2992,6 @@ async function exportBackup() {
       return;
     }
 
-    // Otherwise, create a download link
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
@@ -3064,7 +3064,6 @@ async function importBackup() {
       const parsed = JSON.parse(rawText);
       let data;
 
-      // Handle encrypted backup
       if (
         parsed &&
         parsed.format === "ramble-quiz-encrypted-backup-v1"
@@ -3092,7 +3091,6 @@ async function importBackup() {
           return;
         }
       } else {
-        // Handle unencrypted JSON backup
         const confirmed = await appConfirm(
           "This is an unencrypted JSON backup. Do you want to restore it anyway?",
           {
@@ -3107,7 +3105,6 @@ async function importBackup() {
         data = parsed;
       }
 
-      // Validate backup data
       if (!data || !Array.isArray(data.questions)) {
         throw new Error("Invalid questions");
       }
@@ -3162,7 +3159,6 @@ async function importBackup() {
         ? data.history
         : [];
 
-      // Ask before replacing existing data
       const confirmed = await appConfirm(
         "This will replace your current questions and sets. Make sure you have a backup of your current data. Continue?",
         {
@@ -3174,7 +3170,6 @@ async function importBackup() {
 
       if (!confirmed) return;
 
-      // Save previous data in case storage fails
       const previousQuestions = questions;
       const previousSets = sets;
       const previousHistory = quizHistory;
@@ -3228,7 +3223,6 @@ async function importBackup() {
         updateSoundButtons();
       }
 
-      // Refresh the app
       cancelQuestionEdit();
       cancelSetEdit();
       renderQuestions();
