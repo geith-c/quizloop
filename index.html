@@ -1509,7 +1509,8 @@ let timerInterval=null,timerRemaining=30,audioContext=null,activeTab="home";
 let timedQuizEnabled=false,timedQuizPhase="idle",timedQuizDuration=0,timedQuizRemaining=0,timedQuizSettings={readBase:8,readPerWord:0.5,thinkPerWord:5,answerDisplay:12};
 const MODE_SOUND_KEY="ramble_quiz_mode_sound_v1";
 let modeSoundChoices={quiz:"default",presentation:"default"};
-let defaultSoundSelection={piano:true,violin:false};
+let defaultSoundSelection={piano:false,violin:false,guitar:true};
+let guitarEnabled=true;
 function soundModeLabel(mode){
   if(mode==="piano")return "🎹piano";
   if(mode==="violin")return "🎻violin";
@@ -1522,39 +1523,83 @@ function updateModeSoundButton(mode){
 }
 function applyModeSound(mode){
   const choice=modeSoundChoices[mode]||"default";
-  const selection=choice==="default"?defaultSoundSelection:{piano:choice==="piano"||choice==="both",violin:choice==="violin"||choice==="both"};
+  const selection=choice==="default"
+    ?defaultSoundSelection
+    :{piano:choice==="piano"||choice==="both",
+      violin:choice==="violin"||choice==="both",
+      guitar:false};
+
   document.getElementById("organEnabled").checked=!!selection.piano;
   document.getElementById("violinEnabled").checked=!!selection.violin;
+  guitarEnabled=!!selection.guitar;
+
   updateSoundButtons();
   saveTimerSettings();
   updateModeSoundButton(mode);
 }
 function handleModeSoundChange(mode){
   if(mode!=="quiz"&&mode!=="presentation")return;
-  const select=document.getElementById(mode==="presentation"?"presentationSoundSelect":"quizSoundSelect");
+
+  const select=document.getElementById(
+    mode==="presentation"?"presentationSoundSelect":"quizSoundSelect"
+  );
   if(!select)return;
+
   const selected=select.value;
   if(!["default","piano","violin","both"].includes(selected))return;
+
   modeSoundChoices[mode]=selected;
-  try{localStorage.setItem(MODE_SOUND_KEY,JSON.stringify(modeSoundChoices));}catch(e){console.warn("Unable to save mode sound choices:",e);}
-  // Apply the sound immediately only when this mode is currently active.
-  if((mode==="presentation"&&activeTab==="presentation")||(mode==="quiz"&&activeTab==="play")){
-    const selection=selected==="default"?defaultSoundSelection:{piano:selected==="piano"||selected==="both",violin:selected==="violin"||selected==="both"};
+
+  try{
+    localStorage.setItem(MODE_SOUND_KEY,JSON.stringify(modeSoundChoices));
+  }catch(e){
+    console.warn("Unable to save mode sound choices:",e);
+  }
+
+  if((mode==="presentation"&&activeTab==="presentation")||
+     (mode==="quiz"&&activeTab==="play")){
+
+    const selection=selected==="default"
+      ?defaultSoundSelection
+      :{piano:selected==="piano"||selected==="both",
+        violin:selected==="violin"||selected==="both",
+        guitar:false};
+
     document.getElementById("organEnabled").checked=!!selection.piano;
     document.getElementById("violinEnabled").checked=!!selection.violin;
+    guitarEnabled=!!selection.guitar;
+
     updateSoundButtons();
-    try{saveTimerSettings();}catch(e){console.warn("Unable to save selected sound:",e);}
+    saveTimerSettings();
   }
-  // Preview the chosen sound.
-  if(selected==="piano")playOrganNote(880,.3);
+
+  if(selected==="default")playGuitarNote(880,.5);
+  else if(selected==="piano")playOrganNote(880,.3);
   else if(selected==="violin")playViolinNote(880,.35);
-  else if(selected==="both"){playOrganNote(880,.3);playViolinNote(880,.35);}
+  else if(selected==="both"){
+    playOrganNote(880,.3);
+    playViolinNote(880,.35);
+  }
 }
 function loadModeSoundChoices(){
-  try{const saved=JSON.parse(localStorage.getItem(MODE_SOUND_KEY)||"null");if(saved&&typeof saved==="object"){for(const mode of ["quiz","presentation"]){if(["default","piano","violin","both"].includes(saved[mode]))modeSoundChoices[mode]=saved[mode];}}}catch(e){console.warn("Mode sound settings error:",e);}
-  // The original Presentation Mode default sound is Piano; keep it stable even after another mode is customized.
-  defaultSoundSelection={piano:true,violin:false};
-  updateModeSoundButton("quiz");updateModeSoundButton("presentation");
+  try{
+    const saved=JSON.parse(localStorage.getItem(MODE_SOUND_KEY)||"null");
+
+    if(saved&&typeof saved==="object"){
+      for(const mode of ["quiz","presentation"]){
+        if(["default","piano","violin","both"].includes(saved[mode])){
+          modeSoundChoices[mode]=saved[mode];
+        }
+      }
+    }
+  }catch(e){
+    console.warn("Mode sound settings error:",e);
+  }
+
+  defaultSoundSelection={piano:false,violin:false,guitar:true};
+
+  updateModeSoundButton("quiz");
+  updateModeSoundButton("presentation");
 }
 
 function loadTimerSettings(){
@@ -1584,6 +1629,78 @@ function pluralize(count,singular,plural=singular+"s"){return `${count} ${count=
 function answerLabel(count){return pluralize(count,"Correct Answer");}
 function updateTimerDisplay(){const display=document.getElementById("timerValue"),settings=document.getElementById("timerEnabled");display.textContent=formatTime(timerRemaining);display.style.color=timerRemaining<=5?"#ff7189":"#54b7ff";if(!settings.checked){display.textContent="OFF";display.style.color="";}}
 function getAudioContext(){const AudioContextClass=window.AudioContext||window.webkitAudioContext;if(!AudioContextClass)return null;if(!audioContext)audioContext=new AudioContextClass();if(audioContext.state==="suspended")audioContext.resume().catch(e=>console.warn("Audio resume error:",e));return audioContext;}
+
+function playGuitarNote(frequency,duration=.6){
+  if(!guitarEnabled)return;
+
+  const ctx=getAudioContext();
+  if(!ctx)return;
+
+  try{
+    const sampleRate=ctx.sampleRate;
+    const length=Math.floor(sampleRate*duration);
+    const period=Math.max(2,Math.round(sampleRate/frequency));
+
+    
+    const string=new Float32Array(period);
+
+    for(let i=0;i<period;i++){
+      string[i]=(Math.random()*2-1)*.8;
+    }
+
+    const buffer=ctx.createBuffer(1,length,sampleRate);
+    const data=buffer.getChannelData(0);
+
+    let index=0;
+
+    for(let i=0;i<length;i++){
+      const current=string[index];
+      const next=string[(index+1)%period];
+
+      string[index]=(current+next)*.5*.996;
+      index=(index+1)%period;
+
+      const attack=Math.min(1,i/(sampleRate*.008));
+      const release=Math.min(1,(length-i)/(sampleRate*.08));
+
+      data[i]=current*attack*release;
+    }
+
+    const source=ctx.createBufferSource();
+    const filter=ctx.createBiquadFilter();
+    const gain=ctx.createGain();
+
+    source.buffer=buffer;
+
+    filter.type="lowpass";
+    filter.frequency.value=5200;
+    filter.Q.value=.5;
+
+    gain.gain.value=.35;
+
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+
+    source.onended=()=>{
+      source.disconnect();
+      filter.disconnect();
+      gain.disconnect();
+    };
+
+    source.start();
+
+  }catch(e){
+    console.warn("Acoustic guitar playback error:",e);
+  }
+}
+
+
+function playTimeoutGuitar(){
+  [880,784,659,523,392].forEach((frequency,index)=>{
+    setTimeout(()=>playGuitarNote(frequency,.55),index*420);
+  });
+}
 function playOrganNote(frequency,duration=.35){
   if(!document.getElementById("organEnabled").checked)return;const ctx=getAudioContext();if(!ctx)return;
   try{const now=ctx.currentTime,oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.type="sine";oscillator.frequency.setValueAtTime(frequency,now);gain.gain.setValueAtTime(.0001,now);gain.gain.linearRampToValueAtTime(.12,now+.04);gain.gain.setValueAtTime(.12,now+duration*.6);gain.gain.exponentialRampToValueAtTime(.0001,now+duration);oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start(now);oscillator.stop(now+duration);}catch(e){console.warn("Organ playback error:",e);}
@@ -1610,8 +1727,7 @@ document.addEventListener("visibilitychange",function(){
     }
     document.getElementById("timerStatus").textContent="⏸ Timer paused — app is in the background.";
   }else{
-    // Resume the answer-review countdown too; answered=true is expected during reveal.
-    if(activeTab==="play"&&ramble&&order.length>0){
+      if(activeTab==="play"&&ramble&&order.length>0){
       if(timedQuizEnabled&&answered&&timedQuizPhase==="reveal")runTimedQuizPhase("reveal",Math.max(1,timedQuizRemaining));
       else if(timedQuizEnabled&&!answered&&timedQuizPhase!=="idle")runTimedQuizPhase(timedQuizPhase,Math.max(1,timedQuizRemaining));
       else if(!answered)startQuestionTimer(false);
@@ -1687,6 +1803,9 @@ function startQuestionTimer(reset=true){
     if(timerRemaining > 0){
       const frequency = timerRemaining % 2 === 0 ? 523 : 659;
 
+      if(guitarEnabled)
+        playGuitarNote(frequency,.3);
+
       if(document.getElementById("organEnabled").checked)
         playOrganNote(frequency,.16);
 
@@ -1754,7 +1873,7 @@ function runTimedQuizPhase(phase,duration){
   timerInterval=setInterval(()=>{
     if(document.hidden||activeTab!=='play'||!ramble){stopQuestionTimer();return;}
     timedQuizRemaining=Math.max(0,timedQuizRemaining-1);updateTimedQuizDisplay();
-    if(phase==='think'&&timedQuizRemaining>0){const f=440+440*(timedQuizRemaining/Math.max(1,timedQuizDuration));if(document.getElementById('organEnabled').checked)playOrganNote(f,.22);if(document.getElementById('violinEnabled').checked)playViolinNote(f,.28);}
+    if(phase==='think'&&timedQuizRemaining>0){const f=440+440*(timedQuizRemaining/Math.max(1,timedQuizDuration));if(guitarEnabled)playGuitarNote(f,.3);if(document.getElementById('organEnabled').checked)playOrganNote(f,.22);if(document.getElementById('violinEnabled').checked)playViolinNote(f,.28);}
     if(timedQuizRemaining<=0){stopQuestionTimer();advanceTimedQuizPhase();}
   },1000);
 }
@@ -1774,7 +1893,7 @@ function advanceTimedQuizPhase(){
   }else if(timedQuizPhase==='read2'){
     const answerWords=q.answers.reduce((sum,a)=>sum+presentationWordCount(a),0);runTimedQuizPhase('think',Math.max(1,Math.ceil(answerWords*timedQuizSettings.thinkPerWord)));
   }else if(timedQuizPhase==='think'){
-    if(document.getElementById('organEnabled').checked)playTimeoutOrgan();if(document.getElementById('violinEnabled').checked)playTimeoutViolin();
+    if(document.getElementById('organEnabled').checked)playTimeoutOrgan();if(document.getElementById('violinEnabled').checked)playTimeoutViolin();if(guitarEnabled)playTimeoutGuitar();
     checkAnswer(true);
   }else if(timedQuizPhase==='reveal'){
     timedQuizPhase='idle';nextQuestion();
@@ -1863,7 +1982,6 @@ function restoreQuizSession(){
   }catch(error){console.warn("Unable to restore quiz session:",error);return false;}
 }
 loadTimerSettings();updateSoundButtons();loadModeSoundChoices();
-// The timed-quiz dialog is later in the document, so load its values after parsing finishes.
 document.addEventListener('DOMContentLoaded',function(){
   loadTimedQuizSettings();loadPresentationSettings();
   ['quizReadBase','quizReadPerWord','quizThinkPerWord','quizAnswerDisplay'].forEach(id=>{
@@ -1873,10 +1991,8 @@ document.addEventListener('DOMContentLoaded',function(){
     const el=document.getElementById(id);el.addEventListener('change',savePresentationSettings);el.addEventListener('blur',savePresentationSettings);
   });
 });
-// Save all timer values when the app is backgrounded or closed.
 window.addEventListener('pagehide',function(){saveTimerSettings();saveTimedQuizSettings();savePresentationSettings();});
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){saveTimerSettings();saveTimedQuizSettings();savePresentationSettings();}});
-// Each mode has its own sound selector and saved selection.
 document.getElementById("quizSoundSelect").addEventListener("change",function(){handleModeSoundChange("quiz");});
 document.getElementById("presentationSoundSelect").addEventListener("change",function(){handleModeSoundChange("presentation");});
 document.getElementById("timerSeconds").addEventListener("change",saveTimerSettings);
@@ -2294,33 +2410,44 @@ function showPresentationQuestion(){
   const readSeconds=Math.ceil(settings.readBase+Math.max(0,words-1)*settings.readPerWord);
   startPresentationPhase('read1',readSeconds);
 }
+
 function startPresentationPhase(phase,duration){
   stopPresentationTimer();
   presentationPhase=phase;
   presentationPhaseDuration=Math.max(1,Math.ceil(duration));
   presentationRemaining=presentationPhaseDuration;
   presentationPaused=false;
+
   document.getElementById('presentationPauseBtn').textContent='⏸ PAUSE';
   updatePresentationDisplay();
+
   presentationInterval=setInterval(()=>{
     if(presentationPaused||document.hidden)return;
+
     presentationRemaining=Math.max(0,presentationRemaining-1);
     updatePresentationDisplay();
+
     if(presentationPhase==='think'&&presentationRemaining>0){
       const f=440+440*(presentationRemaining/Math.max(1,presentationPhaseDuration));
+
+      if(guitarEnabled)playGuitarNote(f,.3);
       if(document.getElementById('organEnabled').checked)playOrganNote(f,.22);
       if(document.getElementById('violinEnabled').checked)playViolinNote(f,.28);
     }
+
     if(presentationRemaining<=0){
       if(presentationPhase==='think'){
+        if(guitarEnabled)playTimeoutGuitar();
         if(document.getElementById('organEnabled').checked)playTimeoutOrgan();
         if(document.getElementById('violinEnabled').checked)playTimeoutViolin();
       }
+
       stopPresentationTimer();
       advancePresentationPhase();
     }
   },1000);
 }
+
 function updatePresentationDisplay(){
   const labels={read1:'READING 1 / 2',read2:'READING 2 / 2',think:'ANSWER THINKING TIME',reveal:'ANSWER REVEAL'};
   const kickers={read1:'QUESTION · Read',read2:'QUESTION · Read again',think:'QUESTION · RECALL YOUR ANSWER',reveal:'QUESTION + CORRECT ANSWER'};
@@ -3079,8 +3206,7 @@ async function importBackup() {
         return;
       }
 
-      // Restore timer and sound settings, if included
-      if (data.timerSettings) {
+        if (data.timerSettings) {
         const timer = data.timerSettings;
 
         document.getElementById("timerSeconds").value =
