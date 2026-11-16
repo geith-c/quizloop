@@ -1629,15 +1629,75 @@ document.addEventListener("visibilitychange",function(){
 });
 window.addEventListener("pagehide",function(){saveQuizSession();stopQuestionTimer();});
 function startQuestionTimer(reset=true){
-  if(timedQuizEnabled){startTimedQuizQuestion();return;}
-  stopQuestionTimer();if(reset)timerRemaining=saveTimerSettings();updateTimerDisplay();const enabled=document.getElementById("timerEnabled").checked,status=document.getElementById("timerStatus");
-  if(!enabled){status.textContent="Timer is turned off.";return;}
-  if(document.hidden||(typeof activeTab!=="undefined"&&activeTab!=="play")||!ramble||answered||current>=order.length){status.textContent="⏸ Timer paused.";return;}
-  if(timerRemaining<=0){handleTimeout();return;}status.textContent="⏱️ Timer running.";
-  timerInterval=setInterval(()=>{if(document.hidden||activeTab!=="play"||!ramble||answered){stopQuestionTimer();return;}
-    timerRemaining=Math.max(0,timerRemaining-1);updateTimerDisplay();
-    if(timerRemaining>0){const frequency=timerRemaining%2===0?523:659;if(document.getElementById("organEnabled").checked)playOrganNote(frequency,.16);if(document.getElementById("violinEnabled").checked)playViolinNote(frequency,.3);}
-    if(timerRemaining<=0){stopQuestionTimer();handleTimeout();}
+
+  if(timedQuizEnabled){
+    startTimedQuizQuestion();
+    return;
+  }
+
+  stopQuestionTimer();
+
+  // TIMER OFF: CHECK ANSWER must remain available.
+  const checkBtn = document.getElementById("checkBtn");
+  const answer = document.getElementById("answer");
+
+  if(!answered){
+    checkBtn.disabled = false;
+    checkBtn.classList.remove("hidden");
+    answer.disabled = false;
+  }
+
+  timedQuizPhase = "idle";
+
+  if(reset) timerRemaining = saveTimerSettings();
+
+  updateTimerDisplay();
+
+  const enabled = document.getElementById("timerEnabled").checked;
+  const status = document.getElementById("timerStatus");
+
+  if(!enabled){
+    status.textContent = "Timer is turned off.";
+    return;
+  }
+
+  if(document.hidden || activeTab !== "play" ||
+     !ramble || answered || current >= order.length){
+    status.textContent = "⏸ Timer paused.";
+    return;
+  }
+
+  if(timerRemaining <= 0){
+    handleTimeout();
+    return;
+  }
+
+  status.textContent = "⏱️ Timer running.";
+
+  timerInterval = setInterval(()=>{
+    if(document.hidden || activeTab !== "play" ||
+       !ramble || answered){
+      stopQuestionTimer();
+      return;
+    }
+
+    timerRemaining = Math.max(0, timerRemaining - 1);
+    updateTimerDisplay();
+
+    if(timerRemaining > 0){
+      const frequency = timerRemaining % 2 === 0 ? 523 : 659;
+
+      if(document.getElementById("organEnabled").checked)
+        playOrganNote(frequency,.16);
+
+      if(document.getElementById("violinEnabled").checked)
+        playViolinNote(frequency,.3);
+    }
+
+    if(timerRemaining <= 0){
+      stopQuestionTimer();
+      handleTimeout();
+    }
   },1000);
 }
 function timedNumber(id,fallback,min,max){const v=Number(document.getElementById(id).value);return Math.min(max,Math.max(min,Number.isFinite(v)?v:fallback));}
@@ -1654,7 +1714,27 @@ function loadTimedQuizSettings(){
   readTimedQuizSettings();
 }
 function readTimedQuizSettings(){timedQuizSettings={readBase:timedNumber('quizReadBase',8,1,120),readPerWord:timedNumber('quizReadPerWord',.5,0,10),thinkPerWord:timedNumber('quizThinkPerWord',5,.1,30),answerDisplay:timedNumber('quizAnswerDisplay',12,1,300)};return timedQuizSettings;}
-function toggleTimedQuizOption(enabled){timedQuizEnabled=!!enabled;document.getElementById('timerEnabled').checked=timedQuizEnabled;saveTimerSettings();}
+function toggleTimedQuizOption(enabled){
+  timedQuizEnabled = !!enabled;
+  document.getElementById('timerEnabled').checked = timedQuizEnabled;
+
+  if(!timedQuizEnabled && !answered){
+    stopQuestionTimer();
+    timedQuizPhase = "idle";
+
+    const checkBtn = document.getElementById("checkBtn");
+    const answer = document.getElementById("answer");
+
+    checkBtn.disabled = false;
+    checkBtn.classList.remove("hidden");
+    answer.disabled = false;
+
+    document.getElementById("timerStatus").textContent =
+      "Timer is turned off.";
+  }
+
+  saveTimerSettings();
+}
 function closeTimedQuizSettings(){document.getElementById('timedQuizSettingsModal').classList.add('hidden');}
 function beginTimedQuiz(){saveTimedQuizSettings();closeTimedQuizSettings();timedQuizEnabled=true;document.getElementById('timerEnabled').checked=true;saveTimerSettings();launchQuizScreen();}
 function startTimedQuizQuestion(){
@@ -1681,7 +1761,7 @@ function runTimedQuizPhase(phase,duration){
 function updateTimedQuizDisplay(){
   const value=document.getElementById('timerValue'),status=document.getElementById('timerStatus');
   value.textContent=formatTime(timedQuizRemaining);value.style.color=timedQuizRemaining<=5?'#ff7189':'#54b7ff';
-  const labels={read1:'📖 Read',read2:'📖 Read again',think:'✍️ Answer now — sound countdown',reveal:'📚 Correct answers — review time'};
+  const labels={read1:'📖 Read',read2:'📖 Read again',think:'✍️ Answer now',reveal:'📚 Correct answers — review time'};
   status.textContent=labels[timedQuizPhase]||'Timed Quiz';
 }
 function advanceTimedQuizPhase(){
