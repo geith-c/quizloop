@@ -2656,7 +2656,7 @@ function saveQuestion(){
   const question=document.getElementById("questionInput").value.trim(),answers=parseAnswers(document.getElementById("answersInput").value);
   if(!question){alert("Please enter a question.");return;}if(answers.length===0){alert("Please enter at least one correct answer.");return;}
   if(editingQuestionId){const q=questions.find(q=>q.id===editingQuestionId);if(q){q.question=question;q.answers=answers;}}else questions.push({id:makeId("q"),question,answers});
-  persist();showQuestionScreen("browser");cancelQuestionEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();
+  persist();cancelQuestionEdit();renderQuestions();renderSetPicker();renderSets();renderSetSelect();restartGame();
 }
 function cancelQuestionEdit(){editingQuestionId=null;document.getElementById("questionInput").value="";document.getElementById("answersInput").value="";document.getElementById("saveQuestionBtn").textContent="➕ Add Question";document.getElementById("cancelQuestionBtn").classList.add("hidden");}
 function editQuestion(id){const q=questions.find(q=>q.id===id);if(!q)return;editingQuestionId=id;document.getElementById("questionInput").value=q.question;document.getElementById("answersInput").value=q.answers.join("\n---\n");document.getElementById("saveQuestionBtn").textContent="💾 Save Changes";document.getElementById("cancelQuestionBtn").classList.remove("hidden");showQuestionScreen("editor");document.getElementById("questionInput").focus();window.scrollTo({top:0,behavior:"smooth"});}
